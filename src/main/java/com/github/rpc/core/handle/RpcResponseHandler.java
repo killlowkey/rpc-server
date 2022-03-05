@@ -1,5 +1,6 @@
-package com.github.rpc.core;
+package com.github.rpc.core.handle;
 
+import com.github.rpc.core.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -11,11 +12,11 @@ import java.util.Queue;
  * @author Ray
  * @date created in 2022/3/5 12:12
  */
-public class RpcResponseHandle extends SimpleChannelInboundHandler<RpcResponse> {
+public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
     private final Queue<RpcResponse> responseReceivers;
 
-    public RpcResponseHandle(Queue<RpcResponse> responseReceivers) {
+    public RpcResponseHandler(Queue<RpcResponse> responseReceivers) {
         this.responseReceivers = responseReceivers;
     }
 

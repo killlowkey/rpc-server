@@ -1,6 +1,7 @@
-package com.github.rpc.core;
+package com.github.rpc.core.handle;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.rpc.core.RpcResponse;
 import com.github.rpc.serializer.JsonRpcResponseCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -18,7 +19,7 @@ import java.util.List;
  * @author Ray
  * @date created in 2022/3/5 10:44
  */
-public class RpcResponseCodecHandle extends ByteToMessageCodec<RpcResponse> {
+public class RpcResponseCodecHandler extends ByteToMessageCodec<RpcResponse> {
 
     private final JsonRpcResponseCodec codec = new JsonRpcResponseCodec();
 

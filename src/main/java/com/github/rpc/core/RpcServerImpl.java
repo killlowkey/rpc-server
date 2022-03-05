@@ -1,6 +1,10 @@
 package com.github.rpc.core;
 
 import com.github.rpc.RpcServer;
+import com.github.rpc.core.handle.RpcRequestCodecHandler;
+import com.github.rpc.core.handle.RpcRequestHandler;
+import com.github.rpc.core.handle.RpcResponseCodecHandler;
+import com.github.rpc.core.handle.RpcServerExceptionHandler;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -41,10 +45,12 @@ public class RpcServerImpl implements RpcServer {
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ch.pipeline()
                                 // 请求与响应编解码器
-                                .addLast(new RpcRequestCodecHandle())
-                                .addLast(new RpcResponseCodecHandle())
+                                .addLast(new RpcRequestCodecHandler())
+                                .addLast(new RpcResponseCodecHandler())
                                 // 处理请求
-                                .addLast(new RpcRequestHandle(dispatcher));
+                                .addLast(new RpcRequestHandler(dispatcher))
+                                // 异常处理器
+                                .addLast(new RpcServerExceptionHandler());
                     }
                 });
 

@@ -1,6 +1,9 @@
 package com.github.rpc.core;
 
 import com.github.rpc.RpcClient;
+import com.github.rpc.core.handle.RpcRequestCodecHandler;
+import com.github.rpc.core.handle.RpcResponseCodecHandler;
+import com.github.rpc.core.handle.RpcResponseHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -51,15 +54,18 @@ public class RpcClientImpl implements RpcClient {
     public RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception {
         try {
             lock.lock();
+            // 没有响应直接发送请求
             if (this.responseReceivers.isEmpty()) {
                 this.channel.writeAndFlush(rpcRequest);
             } else {
+                // 等待响应情况，请求需要放入到请求队列
                 this.sendingQueue.offer(rpcRequest);
             }
         } finally {
             lock.unlock();
         }
 
+        // 获取响应，阻塞操作
         RpcResponse rpcResponse = this.responseReceivers.take();
         sendNextRequest();
         return rpcResponse;
@@ -85,10 +91,10 @@ public class RpcClientImpl implements RpcClient {
                                 // note：先响应编码器，后请求编码器
                                 // 响应编码器的 decode 数据之后，请求编码器的 decode 就不会进行工作
                                 // 所以位置一定要正确，否则无法正确编码
-                                .addLast(new RpcResponseCodecHandle())
-                                .addLast(new RpcRequestCodecHandle())
+                                .addLast(new RpcResponseCodecHandler())
+                                .addLast(new RpcRequestCodecHandler())
                                 // 响应处理器
-                                .addLast(new RpcResponseHandle(responseReceivers));
+                                .addLast(new RpcResponseHandler(responseReceivers));
                     }
                 });
 

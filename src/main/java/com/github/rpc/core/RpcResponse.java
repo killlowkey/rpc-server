@@ -1,6 +1,8 @@
 package com.github.rpc.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.github.rpc.constant.ErrorEnum;
+import com.github.rpc.exceptions.RpcServerException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,13 +15,22 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RpcResponse {
 
-    private String version;
+    private String version = "2.0";
     private String id;
     private ErrorMsg error;
     private Object result;
 
     public RpcResponse(ErrorMsg error) {
         this.error = error;
+    }
+
+    public RpcResponse(ErrorEnum errorEnum) {
+        this(new ErrorMsg(errorEnum.getCode(), errorEnum.getMsg()));
+    }
+
+    public RpcResponse(RpcServerException ex) {
+        this.id = ex.getId();
+        this.error = new ErrorMsg(ex.getCode(), ex.getMessage());
     }
 
     @Data
