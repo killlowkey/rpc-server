@@ -1,6 +1,7 @@
 package com.github.rpc.core;
 
 import com.github.rpc.RpcClient;
+import com.github.rpc.loadbalance.LoadBalanceStrategy;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -19,9 +20,21 @@ public class RpcClientProxy {
     private final Map<Method, String> cache = new HashMap<>();
     private final RpcClient rpcClient;
     private boolean start;
+    private boolean loadBalanceFlag;
 
     public RpcClientProxy(InetSocketAddress address) {
         this.rpcClient = new RpcClientImpl(address);
+    }
+
+    /**
+     * 负载均衡
+     *
+     * @param addressList 服务端地址
+     * @param strategy    负载策略
+     */
+    public RpcClientProxy(List<InetSocketAddress> addressList, LoadBalanceStrategy strategy) {
+        this.rpcClient = new RpcLoadBalanceClientImpl(addressList, strategy);
+        this.loadBalanceFlag = true;
     }
 
     public <T> T createProxy(Class<T> type) {
@@ -29,7 +42,8 @@ public class RpcClientProxy {
             throw new IllegalArgumentException("type cannot be null");
         }
 
-        if (!start) {
+        // 非负载均衡模式
+        if (!start && !loadBalanceFlag) {
             this.startClient();
         }
 

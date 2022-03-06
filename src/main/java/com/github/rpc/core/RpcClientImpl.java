@@ -51,6 +51,10 @@ public class RpcClientImpl implements RpcClient {
         this.initBootStrap(address);
     }
 
+    protected RpcClientImpl() {
+
+    }
+
     private void initBootStrap(InetSocketAddress address) {
         bootstrap = new Bootstrap()
                 .group(this.group)

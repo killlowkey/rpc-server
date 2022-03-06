@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * rpc 请求
+ *
  * @author Ray
  * @date created in 2022/3/5 9:39
  */
