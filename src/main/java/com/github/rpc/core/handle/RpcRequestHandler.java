@@ -13,8 +13,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.internal.StringUtil;
 import org.tinylog.Logger;
 
-import java.io.IOException;
-
 /**
  * @author Ray
  * @date created in 2022/3/5 13:05
@@ -34,38 +32,55 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
         // rpc 服务没有该方法
         if (StringUtil.isNullOrEmpty(name) || RpcUtil.getMethod(name) == null) {
-            throw new RpcServerException(ErrorEnum.METHOD_NOT_FOUND, rpcRequest.getId());
+            writeAndFlush(ErrorEnum.METHOD_NOT_FOUND, rpcRequest, ctx);
+            return;
         }
 
         if (Logger.isDebugEnabled()) {
             Logger.debug("handle [{}] rpc request", rpcRequest.getName());
         }
 
-        Object[] params;
         try {
             // 适配方法参数
-            params = jsonParamAdapter.adapt(RpcUtil.getMethod(name), rpcRequest.getParams());
-        } catch (IOException ex) {
-            throw new RpcServerException(ErrorEnum.ADAPT_METHOD_PARAM_ERROR, rpcRequest.getId());
+            Object[] params = jsonParamAdapter.adapt(RpcUtil.getMethod(name), rpcRequest.getParams());
+            // 调用方法
+            RpcResponse response = invoke(name, params, rpcRequest.getId());
+            ctx.writeAndFlush(response);
+        } catch (Throwable ex) {
+            writeAndFlush(ex, rpcRequest, ctx);
         }
 
-        // 调用方法
-        RpcResponse response = invoke(name, params, rpcRequest.getId());
+    }
+
+    private RpcResponse invoke(String name, Object[] params, String id) throws Throwable {
+        RpcResponse response = new RpcResponse(id);
+        // 调用方法并获取结果
+        Object result = this.dispatcher.invoke(name, params);
+        response.setResult(result);
+        return response;
+    }
+
+    private void writeAndFlush(Throwable ex, RpcRequest rpcRequest, ChannelHandlerContext ctx) {
+        RpcResponse response = new RpcResponse(rpcRequest.getId());
+        if (ex instanceof MethodNotFoundException) {
+            RpcResponse.ErrorMsg msg = new RpcResponse.ErrorMsg(ErrorEnum.METHOD_NOT_FOUND);
+            response.setError(msg);
+        } else if (ex instanceof RpcServerException) {
+            response = new RpcResponse((RpcServerException) ex);
+            response.setId(rpcRequest.getId());
+        } else {
+            response = new RpcResponse(rpcRequest.getId());
+            RpcResponse.ErrorMsg msg = new RpcResponse.ErrorMsg(-32603, ex.getMessage());
+            response.setError(msg);
+        }
+
         ctx.writeAndFlush(response);
     }
 
-    private RpcResponse invoke(String name, Object[] params, String id) {
-        RpcResponse response = new RpcResponse(id);
-        try {
-            // 调用方法并获取结果
-            Object result = this.dispatcher.invoke(name, params);
-            response.setResult(result);
-        } catch (MethodNotFoundException throwable) {
-            throw new RpcServerException(ErrorEnum.METHOD_NOT_FOUND, id);
-        } catch (Throwable throwable) {
-            throw new RpcServerException(ErrorEnum.INTERNAL_ERROR, id);
-        }
-
-        return response;
+    private void writeAndFlush(ErrorEnum errorEnum, RpcRequest rpcRequest, ChannelHandlerContext ctx) {
+        RpcResponse response = new RpcResponse(errorEnum);
+        response.setId(rpcRequest.getId());
+        ctx.writeAndFlush(response);
     }
+
 }

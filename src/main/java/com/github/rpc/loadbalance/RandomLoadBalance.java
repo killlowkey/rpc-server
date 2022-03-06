@@ -5,7 +5,6 @@ import org.tinylog.Logger;
 
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 随机负载均衡

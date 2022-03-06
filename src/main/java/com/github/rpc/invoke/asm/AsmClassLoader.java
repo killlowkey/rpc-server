@@ -51,7 +51,6 @@ public class AsmClassLoader extends ClassLoader {
                 Logger.debug("load {} class success from ClassWriter", result.getName());
             }
 
-            // 在 debug 模式保存 class 字节码
             if (this.save) {
                 try {
                     FileOutputStream fos = new FileOutputStream(result.getSimpleName() + ".class");

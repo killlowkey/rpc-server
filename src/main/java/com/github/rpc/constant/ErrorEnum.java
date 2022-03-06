@@ -14,8 +14,8 @@ public enum ErrorEnum {
     METHOD_NOT_FOUND(-32601, "method not found"),
     INVALID_PARAMS(-32602, "invalid params"),
     INTERNAL_ERROR(-32603, "internal_error"),
-    ADAPT_METHOD_PARAM_ERROR(-32000, "adapt method param error");
-
+    ADAPT_METHOD_PARAM_ERROR(-32000, "adapt method param error"),
+    TRIGGER_RATE_LIMIT(-32001, "trigger rate limit");
 
     private final long code;
     private final String msg;

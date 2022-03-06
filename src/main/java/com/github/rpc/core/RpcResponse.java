@@ -31,7 +31,6 @@ public class RpcResponse {
     }
 
     public RpcResponse(RpcServerException ex) {
-        this.id = ex.getId();
         this.error = new ErrorMsg(ex.getCode(), ex.getMessage());
     }
 
@@ -50,6 +49,11 @@ public class RpcResponse {
         public ErrorMsg(long code, String message) {
             this.code = code;
             this.message = message;
+        }
+
+        public ErrorMsg(ErrorEnum errorEnum) {
+            this.code = errorEnum.getCode();
+            this.message = errorEnum.getMsg();
         }
     }
 

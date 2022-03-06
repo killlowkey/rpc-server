@@ -8,5 +8,5 @@ package com.github.rpc.loadbalance;
  */
 public enum LoadBalanceStrategy {
     ROTATION,
-    RANDOM;
+    RANDOM
 }

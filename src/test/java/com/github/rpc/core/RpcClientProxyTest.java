@@ -39,8 +39,6 @@ public class RpcClientProxyTest {
         RpcClientComponent clientComponent = new RpcClientProxy(address)
                 .createProxy(RpcClientComponent.class);
 
-        System.out.println("创建代理。。。");
-
         assertEquals("hello world", clientComponent.hello());
         assertEquals("hello tom", clientComponent.say("tom"));
         assertEquals(10, clientComponent.age());

@@ -4,7 +4,6 @@ import com.github.rpc.RpcServer;
 import com.github.rpc.core.handle.RpcRequestCodec;
 import com.github.rpc.core.handle.RpcRequestHandler;
 import com.github.rpc.core.handle.RpcResponseCodec;
-import com.github.rpc.core.handle.RpcServerExceptionHandler;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -74,9 +73,7 @@ public class RpcServerImpl implements RpcServer {
                                 .addLast(new RpcRequestCodec())
                                 .addLast(new RpcResponseCodec())
                                 // 处理请求
-                                .addLast(new RpcRequestHandler(dispatcher))
-                                // 异常处理器
-                                .addLast(new RpcServerExceptionHandler());
+                                .addLast(new RpcRequestHandler(dispatcher));
                     }
                 });
 
