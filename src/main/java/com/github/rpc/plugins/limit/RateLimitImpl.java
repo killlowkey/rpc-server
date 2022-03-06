@@ -3,7 +3,6 @@ package com.github.rpc.plugins.limit;
 import com.github.rpc.annotation.RateLimitEntry;
 import lombok.Data;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,11 +36,12 @@ public class RateLimitImpl implements RateLimit {
         }
 
         try {
+            // 加锁
             limitEntry.getLock().lock();
-            // 当前时间
             long current = System.currentTimeMillis();
             long interval = limitEntry.getTimeUnit().toMillis(DEFAULT_DURATION);
             long lastResetDate = limitEntry.getLastResetDate().getTime();
+            // 当前时间过期
             if (current - lastResetDate >= interval) {
                 limitEntry.setLastResetDate(new Date());
                 limitEntry.getCounter().set(0);
@@ -49,7 +49,8 @@ public class RateLimitImpl implements RateLimit {
             }
 
             AtomicInteger counter = limitEntry.getCounter();
-            return counter.incrementAndGet() <= limitEntry.getLimit();
+            // 先获取然后累加
+            return counter.getAndIncrement() <= limitEntry.getLimit();
         } finally {
             limitEntry.getLock().unlock();
         }

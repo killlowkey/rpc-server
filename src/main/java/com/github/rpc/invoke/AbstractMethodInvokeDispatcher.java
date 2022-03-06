@@ -39,7 +39,7 @@ public abstract class AbstractMethodInvokeDispatcher implements MethodInvokeDisp
         }
 
         // 方法调用后
-        listeners.forEach(interceptor -> interceptor.atAfterInvoke(context));
+        listeners.forEach(interceptor -> interceptor.atAfterInvoke(context, result));
         return result;
     }
 

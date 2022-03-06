@@ -21,7 +21,7 @@ public interface MethodInvokeListener {
      *
      * @param context method context
      */
-    void atAfterInvoke(MethodContext context);
+    void atAfterInvoke(MethodContext context, Object result);
 
     /**
      * 出现异常

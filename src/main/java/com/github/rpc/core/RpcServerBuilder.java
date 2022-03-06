@@ -8,6 +8,8 @@ import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.invoke.MethodInvokeDispatcherBuilder;
 import com.github.rpc.invoke.MethodInvokeListener;
 import com.github.rpc.plugins.limit.RateLimitInterceptor;
+import com.github.rpc.plugins.statistic.MethodInvocationStatistics;
+import com.github.rpc.plugins.statistic.Storage;
 import io.netty.channel.ChannelOption;
 import io.netty.util.internal.StringUtil;
 
@@ -88,6 +90,12 @@ public class RpcServerBuilder {
 
     public <T> RpcServerBuilder setNettyServerOption(ChannelOption<T> childOption, T value) {
         this.rpcServer.setServerOption(childOption, value);
+        return this;
+    }
+
+    public RpcServerBuilder enableInvocationStatistics(Storage storage) {
+        MethodInvocationStatistics statistics = new MethodInvocationStatistics(storage);
+        this.addMethodInvokeListener(statistics);
         return this;
     }
 
