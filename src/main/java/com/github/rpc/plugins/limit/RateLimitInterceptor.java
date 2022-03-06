@@ -1,6 +1,8 @@
 package com.github.rpc.plugins.limit;
 
 import com.github.rpc.annotation.RateLimitEntry;
+import com.github.rpc.constant.ErrorEnum;
+import com.github.rpc.exceptions.RpcServerException;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.invoke.MethodInvokeInterceptor;
 import com.github.rpc.plugins.DispatcherProxy;
@@ -17,10 +19,10 @@ import java.util.Map;
  */
 public class RateLimitInterceptor implements MethodInvokeInterceptor {
 
-    private final Map<String, RateLimitEntry> rateLimitEntryMap;
+    public final RateLimit rateLimit;
 
     public RateLimitInterceptor(Map<String, RateLimitEntry> rateLimitEntryMap) {
-        this.rateLimitEntryMap = rateLimitEntryMap;
+        this.rateLimit = new RateLimitImpl(rateLimitEntryMap);
     }
 
     @Override
@@ -28,7 +30,7 @@ public class RateLimitInterceptor implements MethodInvokeInterceptor {
         return new RateLimitProxy(methodInvokeDispatcher);
     }
 
-    static class RateLimitProxy extends DispatcherProxy {
+    class RateLimitProxy extends DispatcherProxy {
 
         public RateLimitProxy(MethodInvokeDispatcher source) {
             super(source);
@@ -36,6 +38,9 @@ public class RateLimitInterceptor implements MethodInvokeInterceptor {
 
         @Override
         public Object invoke(String methodName, Object... args) throws Throwable {
+            if (!rateLimit.take(methodName)) {
+                throw new RpcServerException(ErrorEnum.TRIGGER_RATE_LIMIT);
+            }
             return this.source.invoke(methodName, args);
         }
 

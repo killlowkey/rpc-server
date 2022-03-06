@@ -1,11 +1,13 @@
 package com.github.rpc.annotation;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Ray
  * @date created in 2022/3/4 17:38
  */
 @RpcService("RpcComponent02/")
-@RateLimit(limit = 10)
+@RateLimit(limit = 5, value = TimeUnit.MINUTES)
 public class RpcComponent02 {
 
     @Alias(value = "helloAlias", strategy = AliasStrategy.OVERWRITE)
