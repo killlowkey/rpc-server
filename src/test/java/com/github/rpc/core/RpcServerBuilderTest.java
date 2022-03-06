@@ -4,6 +4,7 @@ import com.github.rpc.RpcServer;
 import com.github.rpc.annotation.RpcComponent02;
 import com.github.rpc.invoke.InvokeType;
 import io.netty.channel.ChannelOption;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -18,7 +19,7 @@ import static org.junit.Assert.*;
 public class RpcServerBuilderTest {
 
     @Test
-    public void buildTest() {
+    public void startServerTest() {
         RpcServer rpcServer = new RpcServerBuilder()
                 .invokeType(InvokeType.ASM)
                 .enableSaveAsmByteCode()
@@ -30,4 +31,5 @@ public class RpcServerBuilderTest {
 
         rpcServer.start();
     }
+
 }

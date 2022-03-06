@@ -7,10 +7,12 @@ import com.github.rpc.core.RpcResponse;
  * @author Ray
  * @date created in 2022/3/5 10:28
  */
-public interface RpcClient {
+public interface RpcClient extends InvokeOperation {
+
     RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception;
 
     void start() throws Exception;
 
     void close();
+
 }

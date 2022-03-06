@@ -18,4 +18,8 @@ public class RpcComponent02 {
 
     }
 
+    public String[] getArrayValue(int[] args) {
+        return new String[]{"hello", "world"};
+    }
+
 }

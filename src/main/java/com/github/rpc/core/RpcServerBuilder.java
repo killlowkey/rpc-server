@@ -30,7 +30,6 @@ public class RpcServerBuilder {
     private final RpcServerImpl rpcServer = new RpcServerImpl();
     private final List<MethodInvokeListener> listeners = new ArrayList<>();
 
-
     public RpcServerBuilder scanPackage(String packageName) {
         if (StringUtil.isNullOrEmpty(packageName)) {
             throw new IllegalArgumentException("packageName cannot be empty");
