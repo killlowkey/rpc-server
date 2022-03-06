@@ -25,17 +25,21 @@ public class MethodInvokeDispatcherBuilder {
     private InvokeType type = InvokeType.ASM;
     private final List<MethodInvokeListener> listeners = new ArrayList<>();
     private final RpcServiceConfiguration configuration;
+    private boolean saveAsmByteCode;
 
     public MethodInvokeDispatcherBuilder(RpcServiceConfiguration configuration) {
         this.configuration = configuration;
     }
-
 
     public MethodInvokeDispatcherBuilder invokeType(InvokeType type) {
         this.type = type;
         return this;
     }
 
+    public MethodInvokeDispatcherBuilder enableSaveAsmByteCode() {
+        this.saveAsmByteCode = true;
+        return this;
+    }
 
     public MethodInvokeDispatcherBuilder addInvokeListener(MethodInvokeListener listener) {
         if (listener == null) {
@@ -67,7 +71,7 @@ public class MethodInvokeDispatcherBuilder {
 
         switch (this.type) {
             case ASM:
-                return new AsmGenerator(rpcComponents, listeners).generate();
+                return new AsmGenerator(rpcComponents, listeners, this.saveAsmByteCode).generate();
             case REFLECT:
                 return new ReflectMethodInvokeDispatcher(rpcComponents, listeners);
             case METHOD_HANDLE:

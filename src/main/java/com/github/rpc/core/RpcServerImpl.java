@@ -1,9 +1,9 @@
 package com.github.rpc.core;
 
 import com.github.rpc.RpcServer;
-import com.github.rpc.core.handle.RpcRequestCodecHandler;
+import com.github.rpc.core.handle.RpcRequestCodec;
 import com.github.rpc.core.handle.RpcRequestHandler;
-import com.github.rpc.core.handle.RpcResponseCodecHandler;
+import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.core.handle.RpcServerExceptionHandler;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import io.netty.bootstrap.ServerBootstrap;
@@ -26,27 +26,55 @@ public class RpcServerImpl implements RpcServer {
 
     private final EventLoopGroup boss = new NioEventLoopGroup();
     private final EventLoopGroup worker = new NioEventLoopGroup();
-    private final MethodInvokeDispatcher dispatcher;
-    private final InetSocketAddress address;
+    private ServerBootstrap bootstrap;
+    private MethodInvokeDispatcher dispatcher;
+    private InetSocketAddress address;
 
     public RpcServerImpl(MethodInvokeDispatcher dispatcher, InetSocketAddress address) {
         this.dispatcher = dispatcher;
         this.address = address;
+        this.initBootStrap();
+    }
+
+    public RpcServerImpl() {
+        this.initBootStrap();
+    }
+
+    private void initBootStrap() {
+        bootstrap = new ServerBootstrap()
+                .group(this.boss, this.worker)
+                .channel(NioServerSocketChannel.class);
+    }
+
+    public <T> void setChildOption(ChannelOption<T> option, T value) {
+        this.bootstrap.childOption(option, value);
+    }
+
+    public <T> void setServerOption(ChannelOption<T> option, T value) {
+        this.bootstrap.option(option, value);
+    }
+
+    public void setAddress(InetSocketAddress address) {
+        this.address = address;
+    }
+
+    public void setDispatcher(MethodInvokeDispatcher dispatcher) {
+        this.dispatcher = dispatcher;
     }
 
     @Override
     public void start() {
-        ServerBootstrap bootstrap = new ServerBootstrap()
-                .group(this.boss, this.worker)
-                .channel(NioServerSocketChannel.class)
-                .childOption(ChannelOption.SO_KEEPALIVE, true)
+
+
+
+        bootstrap.childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
                         ch.pipeline()
                                 // 请求与响应编解码器
-                                .addLast(new RpcRequestCodecHandler())
-                                .addLast(new RpcResponseCodecHandler())
+                                .addLast(new RpcRequestCodec())
+                                .addLast(new RpcResponseCodec())
                                 // 处理请求
                                 .addLast(new RpcRequestHandler(dispatcher))
                                 // 异常处理器

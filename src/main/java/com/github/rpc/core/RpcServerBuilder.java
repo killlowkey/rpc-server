@@ -8,6 +8,7 @@ import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.invoke.MethodInvokeDispatcherBuilder;
 import com.github.rpc.invoke.MethodInvokeListener;
 import com.github.rpc.plugins.limit.RateLimitInterceptor;
+import io.netty.channel.ChannelOption;
 import io.netty.util.internal.StringUtil;
 
 import java.net.InetSocketAddress;
@@ -22,11 +23,13 @@ import java.util.Map;
  */
 public class RpcServerBuilder {
 
-    private InetSocketAddress address;
     private String packageName;
     private InvokeType type = InvokeType.ASM;
+    private boolean saveAsmByteCode;
     private final List<Class<?>> components = new ArrayList<>();
+    private final RpcServerImpl rpcServer = new RpcServerImpl();
     private final List<MethodInvokeListener> listeners = new ArrayList<>();
+
 
     public RpcServerBuilder scanPackage(String packageName) {
         if (StringUtil.isNullOrEmpty(packageName)) {
@@ -56,12 +59,17 @@ public class RpcServerBuilder {
         return this;
     }
 
+    public RpcServerBuilder enableSaveAsmByteCode() {
+        this.saveAsmByteCode = true;
+        return this;
+    }
+
     public RpcServerBuilder bind(int port) {
         if (port < 0) {
             throw new IllegalStateException("port needs to be greater than 0");
         }
 
-        this.address = new InetSocketAddress(port);
+        this.rpcServer.setAddress(new InetSocketAddress(port));
         return this;
     }
 
@@ -70,7 +78,17 @@ public class RpcServerBuilder {
             throw new IllegalArgumentException("address cannot be null");
         }
 
-        this.address = address;
+        this.rpcServer.setAddress(address);
+        return this;
+    }
+
+    public <T> RpcServerBuilder setNettyChildOption(ChannelOption<T> childOption, T value) {
+        this.rpcServer.setChildOption(childOption, value);
+        return this;
+    }
+
+    public <T> RpcServerBuilder setNettyServerOption(ChannelOption<T> childOption, T value) {
+        this.rpcServer.setServerOption(childOption, value);
         return this;
     }
 
@@ -80,18 +98,21 @@ public class RpcServerBuilder {
             throw new IllegalStateException("packageName is empty and no item in components");
         }
 
-        if (this.address == null) {
-            throw new IllegalStateException("address cannot be null");
-        }
-
         RpcServiceConfiguration configuration = new RpcServiceConfiguration();
         AnnotationScanner scanner = new AnnotationScanner(this.packageName, configuration);
         scanner.registerScanClass(this.components.toArray(new Class[]{}));
         scanner.scan();
 
-        MethodInvokeDispatcher dispatcher = new MethodInvokeDispatcherBuilder(configuration)
+        MethodInvokeDispatcherBuilder dispatcherBuilder = new MethodInvokeDispatcherBuilder(configuration);
+        // 保存asm生成字节码
+        if (this.saveAsmByteCode) {
+            dispatcherBuilder = dispatcherBuilder.enableSaveAsmByteCode();
+        }
+
+        MethodInvokeDispatcher dispatcher = dispatcherBuilder
                 .invokeType(this.type)
                 .build();
+
         // 添加方法调用监听器
         this.listeners.forEach(dispatcher::addInvokeListener);
 
@@ -100,7 +121,8 @@ public class RpcServerBuilder {
             dispatcher = new RateLimitInterceptor(rateLimitEntryMap).apply(dispatcher);
         }
 
-        return new RpcServerImpl(dispatcher, this.address);
+        this.rpcServer.setDispatcher(dispatcher);
+        return rpcServer;
     }
 
 }

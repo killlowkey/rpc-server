@@ -45,16 +45,11 @@ public class AnnotationScanner {
     public void scan() {
         ScanContext.setConfiguration(configuration);
 
-//        Set<Class<?>> components = new HashSet<>(this.scanClass);
-//        if (!StringUtil.isNullOrEmpty(this.packageName)) {
-//            components.addAll(ClassUtil.scanPackage(this.packageName));
-//        }
-        // 扫描包下所有的类
-//        Set<Class<?>> classSet = ClassUtil.scanPackage(this.packageName);
-//        Set<Class<?>> components = new HashSet<>(classSet);
-
         Set<Class<?>> components = new HashSet<>(this.scanClass);
-        components.addAll(ClassUtil.scanPackage(this.packageName));
+        // packName 不为空，扫描包下所有的类
+        if (!StringUtil.isNullOrEmpty(this.packageName)) {
+            components.addAll(ClassUtil.scanPackage(this.packageName));
+        }
 
         components.forEach(clazz -> {
             // 处理类注解

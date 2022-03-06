@@ -17,6 +17,11 @@ import java.util.Map;
 public class AsmClassLoader extends ClassLoader {
 
     private final Map<String, ClassWriter> classWriterMap = new HashMap<>();
+    private boolean save;
+
+    public AsmClassLoader() {
+
+    }
 
     public AsmClassLoader(String className, ClassWriter cw) {
         this.classWriterMap.put(className, cw);
@@ -24,6 +29,14 @@ public class AsmClassLoader extends ClassLoader {
 
     public AsmClassLoader(Map<String, ClassWriter> classWriterMap) {
         this.classWriterMap.putAll(classWriterMap);
+    }
+
+    public void put(String className, ClassWriter cw) {
+        this.classWriterMap.put(className, cw);
+    }
+
+    public void enableSaveByteCode() {
+        this.save = true;
     }
 
     @Override
@@ -34,7 +47,7 @@ public class AsmClassLoader extends ClassLoader {
 
             Class<?> result = super.defineClass(name, byteCodeData, 0, byteCodeData.length);
             // 在 debug 模式保存 class 字节码
-            if (Logger.isDebugEnabled()) {
+            if (this.save) {
                 try {
                     FileOutputStream fos = new FileOutputStream(result.getSimpleName() + ".class");
                     fos.write(byteCodeData);

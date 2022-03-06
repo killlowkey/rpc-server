@@ -1,8 +1,8 @@
 package com.github.rpc.core;
 
 import com.github.rpc.RpcClient;
-import com.github.rpc.core.handle.RpcRequestCodecHandler;
-import com.github.rpc.core.handle.RpcResponseCodecHandler;
+import com.github.rpc.core.handle.RpcRequestCodec;
+import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.core.handle.RpcResponseHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -91,8 +91,8 @@ public class RpcClientImpl implements RpcClient {
                                 // note：先响应编码器，后请求编码器
                                 // 响应编码器的 decode 数据之后，请求编码器的 decode 就不会进行工作
                                 // 所以位置一定要正确，否则无法正确编码
-                                .addLast(new RpcResponseCodecHandler())
-                                .addLast(new RpcRequestCodecHandler())
+                                .addLast(new RpcResponseCodec())
+                                .addLast(new RpcRequestCodec())
                                 // 响应处理器
                                 .addLast(new RpcResponseHandler(responseReceivers));
                     }

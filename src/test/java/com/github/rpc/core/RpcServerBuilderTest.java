@@ -3,6 +3,7 @@ package com.github.rpc.core;
 import com.github.rpc.RpcServer;
 import com.github.rpc.annotation.RpcComponent02;
 import com.github.rpc.invoke.InvokeType;
+import io.netty.channel.ChannelOption;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -20,8 +21,10 @@ public class RpcServerBuilderTest {
     public void buildTest() {
         RpcServer rpcServer = new RpcServerBuilder()
                 .invokeType(InvokeType.ASM)
+                .enableSaveAsmByteCode()
                 .bind(8989)
                 .registerComponent(RpcComponent02.class)
+                .setNettyChildOption(ChannelOption.SO_KEEPALIVE, true)
 //                .scanPackage("com.github.rpc")
                 .build();
 

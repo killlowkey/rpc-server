@@ -34,13 +34,19 @@ public class AsmGenerator {
 
     private final Map<String, MethodContext> methodContextMap;
     private final List<MethodInvokeListener> listeners;
+    private final AsmClassLoader classLoader;
     private final ClassWriter cw = new ClassWriter(COMPUTE_FRAMES | COMPUTE_MAXS);
 
 
     public AsmGenerator(Map<String, MethodContext> methodContextMap,
-                        List<MethodInvokeListener> listeners) {
+                        List<MethodInvokeListener> listeners,
+                        boolean saveByteCode) {
         this.methodContextMap = methodContextMap;
         this.listeners = listeners;
+        this.classLoader = new AsmClassLoader();
+        if (saveByteCode) {
+            this.classLoader.enableSaveByteCode();
+        }
     }
 
     public MethodInvokeDispatcher generate() {
@@ -106,9 +112,9 @@ public class AsmGenerator {
 
     public Class<?> loadClass(String className, ClassWriter cw) {
         // 从 ClassWrite 加载类
-        AsmClassLoader loader = new AsmClassLoader(className, cw);
+        this.classLoader.put(className, cw);
         try {
-            return loader.loadClass(className);
+            return this.classLoader.loadClass(className);
         } catch (ClassNotFoundException e) {
             Logger.error("load %s class failed", className);
             e.printStackTrace();
