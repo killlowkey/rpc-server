@@ -15,4 +15,5 @@ public interface RpcClient extends InvokeOperation {
 
     void close();
 
+    boolean isRunning();
 }

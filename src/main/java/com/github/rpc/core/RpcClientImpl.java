@@ -45,6 +45,7 @@ public class RpcClientImpl implements RpcClient {
     private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(16);
     private Bootstrap bootstrap;
     private Channel channel;
+    private boolean isRunning;
 
     public RpcClientImpl(InetSocketAddress address) {
         this.initBootStrap(address);
@@ -105,6 +106,7 @@ public class RpcClientImpl implements RpcClient {
         // 连接 channel
         ChannelFuture channelFuture = bootstrap.connect().sync();
         this.channel = channelFuture.channel();
+        this.isRunning = true;
         // 等待关闭 channel
         this.channel.closeFuture().sync();
     }
@@ -119,6 +121,11 @@ public class RpcClientImpl implements RpcClient {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean isRunning() {
+        return this.isRunning;
     }
 
     @Override
