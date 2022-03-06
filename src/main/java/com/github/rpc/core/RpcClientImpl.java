@@ -65,6 +65,9 @@ public class RpcClientImpl implements RpcClient {
             lock.lock();
             // 没有响应直接发送请求
             if (this.responseReceivers.isEmpty()) {
+                if (Logger.isDebugEnabled()) {
+                    Logger.debug("send request#{} to rpc server", rpcRequest.getId());
+                }
                 this.channel.writeAndFlush(rpcRequest);
             } else {
                 // 等待响应情况，请求需要放入到请求队列
@@ -82,7 +85,11 @@ public class RpcClientImpl implements RpcClient {
 
     private void sendNextRequest() {
         if (!sendingQueue.isEmpty()) {
-            this.channel.writeAndFlush(this.sendingQueue.poll());
+            RpcRequest rpcRequest = this.sendingQueue.poll();
+            if (Logger.isDebugEnabled()) {
+                Logger.debug("send request#{} to rpc server", rpcRequest.getId());
+            }
+            this.channel.writeAndFlush(rpcRequest);
         }
     }
 
@@ -106,6 +113,12 @@ public class RpcClientImpl implements RpcClient {
         // 连接 channel
         ChannelFuture channelFuture = bootstrap.connect().sync();
         this.channel = channelFuture.channel();
+
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("rpc client start success, remote server address {}",
+                    this.channel.remoteAddress());
+        }
+
         this.isRunning = true;
         // 等待关闭 channel
         this.channel.closeFuture().sync();

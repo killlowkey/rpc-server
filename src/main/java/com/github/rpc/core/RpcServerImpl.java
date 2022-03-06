@@ -65,8 +65,6 @@ public class RpcServerImpl implements RpcServer {
     @Override
     public void start() {
 
-
-
         bootstrap.childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
@@ -100,6 +98,7 @@ public class RpcServerImpl implements RpcServer {
         try {
             this.boss.shutdownGracefully().sync();
             this.worker.shutdownGracefully().sync();
+            Logger.info("stop rpc server success");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

@@ -46,16 +46,25 @@ public class AsmClassLoader extends ClassLoader {
             byte[] byteCodeData = classWriter.toByteArray();
 
             Class<?> result = super.defineClass(name, byteCodeData, 0, byteCodeData.length);
+
+            if (Logger.isDebugEnabled()) {
+                Logger.debug("load {} class success from ClassWriter", result.getName());
+            }
+
             // 在 debug 模式保存 class 字节码
             if (this.save) {
                 try {
                     FileOutputStream fos = new FileOutputStream(result.getSimpleName() + ".class");
                     fos.write(byteCodeData);
+                    if (Logger.isDebugEnabled()) {
+                        Logger.debug("save {} class to disk success", result.getName());
+                    }
                 } catch (IOException ex) {
                     Logger.error("save {} class failed，ex：{}",
                             result.getSimpleName(), ex.getMessage());
                 }
             }
+
             return result;
         }
 

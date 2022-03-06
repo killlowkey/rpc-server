@@ -3,6 +3,7 @@ package com.github.rpc.annotation;
 import com.github.rpc.core.RpcServiceConfiguration;
 import com.github.rpc.invoke.MethodContext;
 import com.github.rpc.utils.MethodUtil;
+import org.tinylog.Logger;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -32,6 +33,12 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
     }
 
     private void processClass(ScanContext context, RateLimit rateLimit) {
+
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("process [{}] class @RateLimit annotation",
+                    context.getClazz().getSimpleName());
+        }
+
         RpcService rpcService = context.getClazz().getAnnotation(RpcService.class);
         Class<?> clazz = context.getClazz();
         RpcServiceConfiguration configuration = context.getConfiguration();
@@ -42,6 +49,10 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
             if (name.startsWith(rpcService.value())) {
                 Class<?> declaringClass = methodContext.getMethod().getDeclaringClass();
                 if (declaringClass == clazz) {
+                    if (Logger.isDebugEnabled()) {
+                        Logger.debug("add {} rate limit, limit={}, timeUnit={}", name,
+                                rateLimit.limit(), rateLimit.value());
+                    }
                     RateLimitEntry rateLimitEntry = new RateLimitEntry(name, rateLimit.limit(), rateLimit.value());
                     rateLimitEntryMap.put(name, rateLimitEntry);
                 }
@@ -50,6 +61,11 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
     }
 
     private void processMethod(ScanContext context, RateLimit rateLimit) {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("process [{}#{}] method @RateLimit annotation",
+                    context.getClazz().getSimpleName(), context.getMethod().getName());
+        }
+
         // 方法所属的类没有 RpcService 注解，则不需要后续处理
         RpcService rpcService = context.getClazz().getAnnotation(RpcService.class);
         if (rpcService == null) {
@@ -73,6 +89,12 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
         Map<String, RateLimitEntry> rateLimitEntryMap = configuration.getRateLimitEntryMap();
         String name = methodContext.getName();
         RateLimitEntry rateLimitEntry = new RateLimitEntry(name, rateLimit.limit(), rateLimit.value());
+
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("add {} rate limit, limit={}, timeUnit={}", name,
+                    rateLimit.limit(), rateLimit.value());
+        }
+
         rateLimitEntryMap.put(name, rateLimitEntry);
     }
 

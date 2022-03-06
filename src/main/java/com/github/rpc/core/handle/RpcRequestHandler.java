@@ -55,7 +55,7 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
     }
 
     private RpcResponse invoke(String name, Object[] params, String id) {
-        RpcResponse response = new RpcResponse();
+        RpcResponse response = new RpcResponse(id);
         try {
             // 调用方法并获取结果
             Object result = this.dispatcher.invoke(name, params);

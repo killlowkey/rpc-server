@@ -21,6 +21,11 @@ public class RpcServiceAnnotationProcessor implements AnnotationProcessor {
 
     @Override
     public void process(ScanContext context, Annotation annotation) {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("process [{}] class @RpcService annotation",
+                    context.getClazz().getSimpleName());
+        }
+
         RpcService rpcService = (RpcService) annotation;
         this.configuration = context.getConfiguration();
         if (this.configuration == null) {

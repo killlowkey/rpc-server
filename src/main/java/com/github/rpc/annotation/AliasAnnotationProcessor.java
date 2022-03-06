@@ -13,7 +13,7 @@ import java.util.Map;
  * 别名注解处理器
  * 1、EXTEND 模式
  * 2、OVERWRITE 模式
- *
+ * <p>
  * 处理后要 clone 一份 MethodContext 更新 name，之后添加到组件中
  *
  * @author Ray
@@ -24,6 +24,11 @@ public class AliasAnnotationProcessor implements AnnotationProcessor {
     @Override
     public void process(ScanContext context, Annotation annotation) {
         Alias alias = (Alias) annotation;
+
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("process [{}#{}] method @Alias annotation",
+                    context.getClazz().getSimpleName(), context.getMethod().getName());
+        }
 
         if (alias.value().isBlank()) {
             if (Logger.isDebugEnabled()) {
@@ -53,11 +58,9 @@ public class AliasAnnotationProcessor implements AnnotationProcessor {
         RpcServiceConfiguration configuration = context.getConfiguration();
         if (alias.strategy() == AliasStrategy.OVERWRITE) {
             // OVERWRITE 模式：别名组件名称为 Alias#value()
-            MethodContext newMethod = methodContext.clone();
-            newMethod.setName(alias.value());
-            rpcComponents.put(alias.value(), newMethod);
-
-            updateRateLimit(configuration, componentName, alias.value());
+            String name = alias.value();
+            putAliasComponent(name, methodContext, rpcComponents);
+            updateRateLimit(configuration, componentName, name);
         } else if (alias.strategy() == AliasStrategy.EXTEND) {
             // EXTEND 模式：别名组件名称为 RpcService#value() + Alias#value()
             String name = getOverwriteComponentName(methodContext, alias);
@@ -65,13 +68,20 @@ public class AliasAnnotationProcessor implements AnnotationProcessor {
                 return;
             }
 
-            MethodContext newMethod = methodContext.clone();
-            newMethod.setName(name);
-            rpcComponents.put(name, newMethod);
-
+            putAliasComponent(name, methodContext, rpcComponents);
             updateRateLimit(configuration, componentName, name);
         }
 
+    }
+
+    private void putAliasComponent(String name, MethodContext context,
+                                   Map<String, MethodContext> rpcComponents) {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("create {} alias rpc component", name);
+        }
+        MethodContext newContext = context.clone();
+        newContext.setName(name);
+        rpcComponents.put(name, newContext);
     }
 
     private String getOverwriteComponentName(MethodContext context, Alias alias) {

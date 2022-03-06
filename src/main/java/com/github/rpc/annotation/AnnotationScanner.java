@@ -3,6 +3,7 @@ package com.github.rpc.annotation;
 import cn.hutool.core.util.ClassUtil;
 import com.github.rpc.core.RpcServiceConfiguration;
 import io.netty.util.internal.StringUtil;
+import org.tinylog.Logger;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -48,6 +49,7 @@ public class AnnotationScanner {
         Set<Class<?>> components = new HashSet<>(this.scanClass);
         // packName 不为空，扫描包下所有的类
         if (!StringUtil.isNullOrEmpty(this.packageName)) {
+            Logger.info("scan {} package components", this.packageName);
             components.addAll(ClassUtil.scanPackage(this.packageName));
         }
 

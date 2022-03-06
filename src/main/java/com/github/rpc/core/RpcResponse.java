@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
  * @author Ray
  * @date created in 2022/3/5 9:40
  */
-@Data
 @NoArgsConstructor
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RpcResponse {
 
@@ -31,6 +31,10 @@ public class RpcResponse {
     public RpcResponse(RpcServerException ex) {
         this.id = ex.getId();
         this.error = new ErrorMsg(ex.getCode(), ex.getMessage());
+    }
+
+    public RpcResponse(String id) {
+        this.id = id;
     }
 
     @Data
