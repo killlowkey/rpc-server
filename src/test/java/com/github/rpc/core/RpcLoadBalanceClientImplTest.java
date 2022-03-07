@@ -26,7 +26,7 @@ public class RpcLoadBalanceClientImplTest {
                 .invokeType(InvokeType.ASM)
                 .enableSaveAsmByteCode()
                 .bind(8888)
-                .registerComponent(RpcServerComponent.class)
+                .registerComponent(PersonServiceImpl.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .build();
 
@@ -40,7 +40,7 @@ public class RpcLoadBalanceClientImplTest {
                 .invokeType(InvokeType.ASM)
                 .enableSaveAsmByteCode()
                 .bind(9999)
-                .registerComponent(RpcServerComponent.class)
+                .registerComponent(PersonServiceImpl.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .build();
 
@@ -52,8 +52,8 @@ public class RpcLoadBalanceClientImplTest {
     public void loadBalanceTest() {
         InetSocketAddress address1 = new InetSocketAddress("127.0.0.1", 8888);
         InetSocketAddress address2 = new InetSocketAddress("127.0.0.1", 9999);
-        RpcClientComponent clientComponent = new RpcClientProxy(Arrays.asList(address1, address2), LoadBalanceStrategy.ROTATION)
-                .createProxy(RpcClientComponent.class);
+        PersonService clientComponent = new RpcClientProxy(Arrays.asList(address1, address2), LoadBalanceStrategy.ROTATION)
+                .createProxy(PersonService.class);
 
         assertEquals("hello world", clientComponent.hello());
         assertEquals("hello tom", clientComponent.say("tom"));

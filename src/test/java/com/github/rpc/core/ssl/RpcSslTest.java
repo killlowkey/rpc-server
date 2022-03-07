@@ -2,10 +2,10 @@ package com.github.rpc.core.ssl;
 
 import cn.hutool.core.io.resource.ClassPathResource;
 import com.github.rpc.RpcServer;
-import com.github.rpc.core.RpcClientComponent;
+import com.github.rpc.core.PersonService;
 import com.github.rpc.core.RpcClientProxy;
 import com.github.rpc.core.RpcServerBuilder;
-import com.github.rpc.core.RpcServerComponent;
+import com.github.rpc.core.PersonServiceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +32,7 @@ public class RpcSslTest {
 
         RpcServer rpcServer = new RpcServerBuilder()
                 .bind(8989)
-                .registerComponent(RpcServerComponent.class)
+                .registerComponent(PersonServiceImpl.class)
                 .enableSSL(file, "sNetty", true)
                 .build();
 
@@ -45,9 +45,9 @@ public class RpcSslTest {
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8989);
 
         File file = new ClassPathResource("/certs/cChat.jks").getFile();
-        RpcClientComponent clientComponent = new RpcClientProxy(address)
+        PersonService clientComponent = new RpcClientProxy(address)
                 .enableSsl(file, "sNetty")
-                .createProxy(RpcClientComponent.class);
+                .createProxy(PersonService.class);
 
         assertEquals("hello world", clientComponent.hello());
         assertEquals("hello tom", clientComponent.say("tom"));

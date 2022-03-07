@@ -7,7 +7,7 @@ import com.github.rpc.annotation.RpcClient;
  * @date created in 2022/3/6 11:11
  */
 @RpcClient("service/")
-public interface RpcClientComponent {
+public interface PersonService {
 
     String hello();
 

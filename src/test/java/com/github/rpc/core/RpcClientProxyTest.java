@@ -25,7 +25,7 @@ public class RpcClientProxyTest {
                 .invokeType(InvokeType.ASM)
                 .enableSaveAsmByteCode()
                 .bind(8989)
-                .registerComponent(RpcServerComponent.class)
+                .registerComponent(PersonServiceImpl.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .build();
 
@@ -36,10 +36,10 @@ public class RpcClientProxyTest {
     @Test
     public void invokeTest() throws InterruptedException {
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8989);
-        RpcClientComponent clientComponent = new RpcClientProxy(address)
-                .createProxy(RpcClientComponent.class);
+        RpcClientProxy rpcClientProxy = new RpcClientProxy(address);
+        PersonService clientComponent = rpcClientProxy.createProxy(PersonService.class);
 
-//        assertEquals("hello world", clientComponent.hello());
+        assertEquals("hello world", clientComponent.hello());
         assertEquals("hello tom", clientComponent.say("tom"));
         assertEquals(10, clientComponent.age());
     }
