@@ -30,7 +30,7 @@ public class RpcClientImplTest {
                 .enableSaveAsmByteCode()
                 .bind(8989)
                 .registerComponent(RpcComponent02.class)
-                .setNettyChildOption(ChannelOption.SO_KEEPALIVE, true)
+                .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .build();
 
         new Thread(rpcServer::start).start();

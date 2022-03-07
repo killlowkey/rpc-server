@@ -11,8 +11,10 @@ import com.github.rpc.plugins.limit.RateLimitInterceptor;
 import com.github.rpc.plugins.statistic.MethodInvocationStatistics;
 import com.github.rpc.plugins.statistic.Storage;
 import io.netty.channel.ChannelOption;
+import io.netty.handler.ssl.SslContext;
 import io.netty.util.internal.StringUtil;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,19 +85,24 @@ public class RpcServerBuilder {
         return this;
     }
 
-    public <T> RpcServerBuilder setNettyChildOption(ChannelOption<T> childOption, T value) {
-        this.rpcServer.setChildOption(childOption, value);
+    public <T> RpcServerBuilder nettyChildOption(ChannelOption<T> childOption, T value) {
+        this.rpcServer.childOption(childOption, value);
         return this;
     }
 
-    public <T> RpcServerBuilder setNettyServerOption(ChannelOption<T> childOption, T value) {
-        this.rpcServer.setServerOption(childOption, value);
+    public <T> RpcServerBuilder nettyServerOption(ChannelOption<T> childOption, T value) {
+        this.rpcServer.serverOption(childOption, value);
         return this;
     }
 
     public RpcServerBuilder enableInvocationStatistics(Storage storage) {
         MethodInvocationStatistics statistics = new MethodInvocationStatistics(storage);
         this.addMethodInvokeListener(statistics);
+        return this;
+    }
+
+    public RpcServerBuilder enableSSL(File jksFile, String keyStorePass, boolean needClientAuth) {
+        this.rpcServer.enableSsl(jksFile, keyStorePass, needClientAuth);
         return this;
     }
 

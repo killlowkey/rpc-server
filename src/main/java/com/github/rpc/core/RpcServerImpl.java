@@ -6,6 +6,8 @@ import com.github.rpc.core.handle.RpcRequestHandler;
 import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -13,9 +15,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.json.JsonObjectDecoder;
+import io.netty.handler.ssl.SslContext;
 import org.tinylog.Logger;
 
+import java.io.File;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Ray
@@ -25,6 +33,7 @@ public class RpcServerImpl implements RpcServer {
 
     private final EventLoopGroup boss = new NioEventLoopGroup();
     private final EventLoopGroup worker = new NioEventLoopGroup();
+    private final List<NettyServerProcessor> processors = new ArrayList<>();
     private ServerBootstrap bootstrap;
     private MethodInvokeDispatcher dispatcher;
     private InetSocketAddress address;
@@ -45,11 +54,11 @@ public class RpcServerImpl implements RpcServer {
                 .channel(NioServerSocketChannel.class);
     }
 
-    public <T> void setChildOption(ChannelOption<T> option, T value) {
+    public <T> void childOption(ChannelOption<T> option, T value) {
         this.bootstrap.childOption(option, value);
     }
 
-    public <T> void setServerOption(ChannelOption<T> option, T value) {
+    public <T> void serverOption(ChannelOption<T> option, T value) {
         this.bootstrap.option(option, value);
     }
 
@@ -61,14 +70,30 @@ public class RpcServerImpl implements RpcServer {
         this.dispatcher = dispatcher;
     }
 
+    public void addProcessor(NettyServerProcessor processor) {
+        this.processors.add(processor);
+    }
+
     @Override
     public void start() {
+
+        if (this.dispatcher == null) {
+            throw new IllegalStateException("dispatcher cannot be null");
+        }
+
+        if (this.address == null) {
+            throw new IllegalStateException("address cannot be null");
+        }
+
+        this.processors.forEach(processor -> processor.process(bootstrap));
 
         bootstrap.childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
+                        processors.forEach(processor -> processor.processChannel(ch));
                         ch.pipeline()
+                                .addLast(new JsonObjectDecoder())
                                 // 请求与响应编解码器
                                 .addLast(new RpcRequestCodec())
                                 .addLast(new RpcResponseCodec())
@@ -104,6 +129,11 @@ public class RpcServerImpl implements RpcServer {
     @Override
     public void addListener() {
 
+    }
+
+    @Override
+    public void enableSsl(File jksFile, String password, boolean needClientAuth) {
+        this.addProcessor(new ServerSslProcessor(jksFile, password, needClientAuth));
     }
 
 }

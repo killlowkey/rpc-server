@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.rpc.constant.ErrorEnum;
 import com.github.rpc.core.RpcRequest;
 import com.github.rpc.core.RpcResponse;
-import com.github.rpc.exceptions.RpcServerException;
 import com.github.rpc.serializer.JsonRpcRequestCodec;
 import com.github.rpc.serializer.JsonRpcResponseCodec;
 import io.netty.buffer.ByteBuf;

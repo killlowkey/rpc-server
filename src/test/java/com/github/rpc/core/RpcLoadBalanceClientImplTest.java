@@ -27,7 +27,7 @@ public class RpcLoadBalanceClientImplTest {
                 .enableSaveAsmByteCode()
                 .bind(8888)
                 .registerComponent(RpcServerComponent.class)
-                .setNettyChildOption(ChannelOption.SO_KEEPALIVE, true)
+                .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .build();
 
         new Thread(rpcServer::start).start();
@@ -41,7 +41,7 @@ public class RpcLoadBalanceClientImplTest {
                 .enableSaveAsmByteCode()
                 .bind(9999)
                 .registerComponent(RpcServerComponent.class)
-                .setNettyChildOption(ChannelOption.SO_KEEPALIVE, true)
+                .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .build();
 
         new Thread(rpcServer::start).start();

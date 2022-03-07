@@ -31,6 +31,7 @@ hs_err_pid*
 
 .idea
 logs
+src/main/resources/certs
 
 # User-specific stuff
 .idea/**/workspace.xml

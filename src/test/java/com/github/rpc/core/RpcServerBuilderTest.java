@@ -3,15 +3,10 @@ package com.github.rpc.core;
 import com.github.rpc.RpcServer;
 import com.github.rpc.annotation.RpcComponent02;
 import com.github.rpc.invoke.InvokeType;
-import com.github.rpc.plugins.statistic.MethodInvocationInfo;
-import com.github.rpc.plugins.statistic.Storage;
 import io.netty.channel.ChannelOption;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Ray
@@ -27,7 +22,7 @@ public class RpcServerBuilderTest {
                 .enableSaveAsmByteCode()
                 .bind(8989)
                 .registerComponent(RpcComponent02.class)
-                .setNettyChildOption(ChannelOption.SO_KEEPALIVE, true)
+                .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
                 .enableInvocationStatistics(System.out::println)
 //                .scanPackage("com.github.rpc")
                 .build();

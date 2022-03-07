@@ -2,7 +2,9 @@ package com.github.rpc.core;
 
 import com.github.rpc.RpcClient;
 import com.github.rpc.loadbalance.LoadBalanceStrategy;
+import io.netty.handler.ssl.SslContext;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
@@ -20,11 +22,11 @@ public class RpcClientProxy {
     private final Map<Method, String> cache = new HashMap<>();
     private final RpcClient rpcClient;
     private boolean start;
-    private boolean loadBalanceFlag;
 
     public RpcClientProxy(InetSocketAddress address) {
         this.rpcClient = new RpcClientImpl(address);
     }
+
 
     /**
      * 负载均衡
@@ -34,7 +36,11 @@ public class RpcClientProxy {
      */
     public RpcClientProxy(List<InetSocketAddress> addressList, LoadBalanceStrategy strategy) {
         this.rpcClient = new RpcLoadBalanceClientImpl(addressList, strategy);
-        this.loadBalanceFlag = true;
+    }
+
+    public RpcClientProxy enableSsl(File jksFile, String keyStorePass) {
+        this.rpcClient.enableSsl(jksFile, keyStorePass, false);
+        return this;
     }
 
     public <T> T createProxy(Class<T> type) {
@@ -42,8 +48,7 @@ public class RpcClientProxy {
             throw new IllegalArgumentException("type cannot be null");
         }
 
-        // 非负载均衡模式
-        if (!start && !loadBalanceFlag) {
+        if (!start) {
             this.startClient();
         }
 
