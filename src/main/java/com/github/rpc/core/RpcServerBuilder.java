@@ -7,11 +7,11 @@ import com.github.rpc.invoke.InvokeType;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.invoke.MethodInvokeDispatcherBuilder;
 import com.github.rpc.invoke.MethodInvokeListener;
+import com.github.rpc.plugins.health.HealthRequestInterceptor;
 import com.github.rpc.plugins.limit.RateLimitInterceptor;
 import com.github.rpc.plugins.statistic.MethodInvocationStatistics;
 import com.github.rpc.plugins.statistic.Storage;
 import io.netty.channel.ChannelOption;
-import io.netty.handler.ssl.SslContext;
 import io.netty.util.internal.StringUtil;
 
 import java.io.File;
@@ -112,6 +112,7 @@ public class RpcServerBuilder {
             throw new IllegalStateException("packageName is empty and no item in components");
         }
 
+        // 配置扫描
         RpcServiceConfiguration configuration = new RpcServiceConfiguration();
         AnnotationScanner scanner = new AnnotationScanner(this.packageName, configuration);
         scanner.registerScanClass(this.components.toArray(new Class[]{}));
@@ -130,10 +131,14 @@ public class RpcServerBuilder {
         // 添加方法调用监听器
         this.listeners.forEach(dispatcher::addInvokeListener);
 
+        // 接口限流
         Map<String, RateLimitEntry> rateLimitEntryMap = configuration.getRateLimitEntryMap();
         if (rateLimitEntryMap.size() > 0) {
             dispatcher = new RateLimitInterceptor(rateLimitEntryMap).apply(dispatcher);
         }
+
+        // 健康检查
+        dispatcher = new HealthRequestInterceptor().apply(dispatcher);
 
         this.rpcServer.setDispatcher(dispatcher);
         return rpcServer;
