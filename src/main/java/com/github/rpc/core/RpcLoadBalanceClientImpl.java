@@ -9,6 +9,7 @@ import com.github.rpc.loadbalance.RotationLoadBalance;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -74,6 +75,12 @@ public class RpcLoadBalanceClientImpl extends RpcClientImpl {
         // 调用负载均衡选择 rpc client
         RpcClient rpcClient = this.loadBalance.select();
         return rpcClient.sendRequest(rpcRequest);
+    }
+
+    @Override
+    public Future<RpcResponse> sendNoBlockRequest(RpcRequest rpcRequest) throws Exception {
+        RpcClient rpcClient = this.loadBalance.select();
+        return rpcClient.sendNoBlockRequest(rpcRequest);
     }
 
     @Override

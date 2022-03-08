@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -45,9 +45,11 @@ public class RpcClientImpl implements RpcClient {
     private final ReentrantLock lock = new ReentrantLock();
     private final List<NettyClientProcessor> processors = new ArrayList<>();
     // 存放请求
-    private final ArrayBlockingQueue<RpcRequest> sendingQueue = new ArrayBlockingQueue<>(64);
+    private final ArrayBlockingQueue<RpcRequest> sendingQueue = new ArrayBlockingQueue<>(128);
     // 存放响应
-    private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(16);
+    private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(128);
+    // 异步请求线程池
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
     private Bootstrap bootstrap;
     private Channel channel;
     private boolean isRunning;
@@ -70,6 +72,15 @@ public class RpcClientImpl implements RpcClient {
 
     @Override
     public RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception {
+        // 发送请求
+        this.doSendRequest(rpcRequest);
+        // 获取响应，阻塞操作
+        RpcResponse rpcResponse = this.responseReceivers.take();
+        sendNextRequest();
+        return rpcResponse;
+    }
+
+    private void doSendRequest(RpcRequest rpcRequest) {
         try {
             lock.lock();
             // 没有响应直接发送请求
@@ -85,11 +96,12 @@ public class RpcClientImpl implements RpcClient {
         } finally {
             lock.unlock();
         }
+    }
 
-        // 获取响应，阻塞操作
-        RpcResponse rpcResponse = this.responseReceivers.take();
-        sendNextRequest();
-        return rpcResponse;
+    @Override
+    public Future<RpcResponse> sendNoBlockRequest(RpcRequest rpcRequest) throws Exception {
+        Callable<RpcResponse> task = () -> sendRequest(rpcRequest);
+        return executorService.submit(task);
     }
 
     @Override
@@ -156,6 +168,7 @@ public class RpcClientImpl implements RpcClient {
             this.channel.close().sync();
             // 释放连接池资源
             this.group.shutdownGracefully().sync();
+            this.isRunning = false;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

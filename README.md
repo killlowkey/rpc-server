@@ -11,6 +11,7 @@ rpc-server 是一个基于 netty rpc 框架
   * Reflect
   * Method Handle
 * 客户端接口动态代理
+* 阻塞/非阻塞调用
 * 通讯加密：SSL
 * 注解配置扫描
 * 负载均衡
@@ -75,12 +76,12 @@ rpc-server 是一个基于 netty rpc 框架
    InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8989);
    RpcClientProxy rpcClientProxy = new RpcClientProxy(address);
    // 对 PersonService 接口动态代理
-   PersonService clientComponent = rpcClientProxy.createProxy(PersonService.class);
+   PersonService personService = rpcClientProxy.createProxy(PersonService.class);
    
    // 方法调用
-   assertEquals("hello world", clientComponent.hello());
-   assertEquals("hello tom", clientComponent.say("tom"));
-   assertEquals(10, clientComponent.age());
+   assertEquals("hello world", personService.hello());
+   assertEquals("hello tom", personService.say("tom"));
+   assertEquals(10, personService.age());
    ```
 
    
