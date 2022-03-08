@@ -169,7 +169,9 @@ public class RpcClientImpl implements RpcClient {
             // 释放连接池资源
             this.group.shutdownGracefully().sync();
             this.isRunning = false;
+            this.executorService.shutdown();
         } catch (InterruptedException e) {
+            Logger.error("stop rpc client failed, ex: {}", e.getMessage());
             e.printStackTrace();
         }
     }
