@@ -94,4 +94,9 @@ public class RpcLoadBalanceClientImpl extends RpcClientImpl {
 
         return true;
     }
+
+    @Override
+    public void run() {
+        // Noop
+    }
 }

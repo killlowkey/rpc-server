@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
  * @author Ray
  * @date created in 2022/3/5 10:28
  */
-public interface RpcClient extends InvokeOperation, SslOperation {
+public interface RpcClient extends InvokeOperation, SslOperation, HealthCheck {
 
     RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception;
 

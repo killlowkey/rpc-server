@@ -1,5 +1,7 @@
 package com.github.rpc.core;
 
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,10 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -39,6 +38,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class RpcClientImpl implements RpcClient {
 
     private static final String DEFAULT_VERSION = "2.0";
+    private static final int DEFAULT_HEALTH_CHECK_INTERVAL = 30;
+
     private final AtomicLong idCounter = new AtomicLong();
     private final ObjectMapper mapper = new ObjectMapper();
     private final EventLoopGroup group = new NioEventLoopGroup();
@@ -50,12 +51,18 @@ public class RpcClientImpl implements RpcClient {
     private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(128);
     // 异步请求线程池
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
+
+
     private Bootstrap bootstrap;
     private Channel channel;
     private boolean isRunning;
+    private ScheduledExecutorService scheduledService;
+    private Date lastHealthCheckDate;
+    private int healthCheckFailureCount;
 
     public RpcClientImpl(InetSocketAddress address) {
         this.initBootStrap(address);
+        this.initHealthCheck();
     }
 
     protected RpcClientImpl() {
@@ -69,6 +76,10 @@ public class RpcClientImpl implements RpcClient {
                 .channel(NioSocketChannel.class);
     }
 
+    private void initHealthCheck() {
+        this.scheduledService = Executors.newSingleThreadScheduledExecutor(new HealthCheckThreadFactory());
+        this.scheduledService.scheduleWithFixedDelay(this, 0, DEFAULT_HEALTH_CHECK_INTERVAL, TimeUnit.SECONDS);
+    }
 
     @Override
     public RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception {
@@ -76,6 +87,8 @@ public class RpcClientImpl implements RpcClient {
         this.doSendRequest(rpcRequest);
         // 获取响应，阻塞操作
         RpcResponse rpcResponse = this.responseReceivers.take();
+        // 更新健康检查信息
+        updateHealthCheckInfo();
         sendNextRequest();
         return rpcResponse;
     }
@@ -157,18 +170,22 @@ public class RpcClientImpl implements RpcClient {
         }
 
         this.isRunning = true;
-        // 等待关闭 channel
-        this.channel.closeFuture().sync();
+        try {
+            // 等待关闭 channel
+            this.channel.closeFuture().sync();
+        } finally {
+            this.isRunning = false;
+        }
     }
 
     @Override
     public void close() {
         try {
+            this.isRunning = false;
             // 关闭 channel
             this.channel.close().sync();
             // 释放连接池资源
             this.group.shutdownGracefully().sync();
-            this.isRunning = false;
             this.executorService.shutdown();
         } catch (InterruptedException e) {
             Logger.error("stop rpc client failed, ex: {}", e.getMessage());
@@ -249,6 +266,36 @@ public class RpcClientImpl implements RpcClient {
     public <T> T invoke(String methodName, Object[] arguments, Class<T> clazz, Map<String, String> extraHeaders)
             throws Throwable {
         return (T) invoke(methodName, arguments, Type.class.cast(clazz), extraHeaders);
+    }
+
+    @Override
+    public void run() {
+        if (this.lastHealthCheckDate == null) {
+            this.lastHealthCheckDate = new Date();
+        }
+        // 是否满足健康检查间隔
+        long intervalSecond = DateUtil.between(this.lastHealthCheckDate, new Date(), DateUnit.SECOND);
+        if (intervalSecond < DEFAULT_HEALTH_CHECK_INTERVAL) {
+            return;
+        }
+
+        String id = String.valueOf(idCounter.getAndIncrement());
+        RpcRequest rpcRequest = new RpcRequest(id, DEFAULT_VERSION, "health", null);
+        try {
+            sendRequest(rpcRequest);
+            updateHealthCheckInfo();
+        } catch (Exception exception) {
+            Logger.error("health check failed, ex: {}", exception.getMessage());
+            if (++healthCheckFailureCount >= 3) {
+                Logger.info("close {} client, health check failure count >= 3", this.toString());
+                this.close();
+            }
+        }
+    }
+
+    private void updateHealthCheckInfo() {
+        this.lastHealthCheckDate = new Date();
+        this.healthCheckFailureCount = 0;
     }
 
 }
