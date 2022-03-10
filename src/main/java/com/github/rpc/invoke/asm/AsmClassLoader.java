@@ -52,8 +52,7 @@ public class AsmClassLoader extends ClassLoader {
             }
 
             if (this.save) {
-                try {
-                    FileOutputStream fos = new FileOutputStream(result.getSimpleName() + ".class");
+                try (FileOutputStream fos = new FileOutputStream(result.getSimpleName() + ".class")) {
                     fos.write(byteCodeData);
                     if (Logger.isDebugEnabled()) {
                         Logger.debug("save {} class to disk success", result.getName());
