@@ -27,6 +27,10 @@ public abstract class AbstractLoadBalance implements LoadBalance {
                 .collect(Collectors.toList());
         this.rpcClients.removeAll(failedClients);
 
+        if (this.rpcClients.isEmpty()) {
+            throw new IllegalStateException("none available rpc clients");
+        }
+
         RpcClient rpcClient = doSelect();
         if (Logger.isDebugEnabled()) {
             Logger.debug("{} select {} rpcClient", this.getClass().getSimpleName(), rpcClient);
