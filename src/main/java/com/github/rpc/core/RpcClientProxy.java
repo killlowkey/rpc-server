@@ -78,16 +78,20 @@ public class RpcClientProxy {
     }
 
     private void startClient() {
-        new Thread(() -> {
-            try {
-                this.rpcClient.start();
-                this.start = true;
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
-        }).start();
+        synchronized (this) {
+            if (!start) {
+                new Thread(() -> {
+                    try {
+                        this.rpcClient.start();
+                        this.start = true;
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+                }).start();
 
-        this.waitStartClient();
+                this.waitStartClient();
+            }
+        }
     }
 
     private void waitStartClient() {

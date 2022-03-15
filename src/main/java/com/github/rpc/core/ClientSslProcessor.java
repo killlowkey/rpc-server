@@ -7,6 +7,11 @@ import io.netty.handler.ssl.SslHandler;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.io.File;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Objects;
 
 /**
@@ -35,4 +40,17 @@ public class ClientSslProcessor implements NettyClientProcessor {
         channel.pipeline().addFirst("ssl", new SslHandler(engine));  //4
     }
 
+    public static void main(String[] args) {
+        String name = "hello";
+        switch (name) {
+            case "hello":
+                System.out.println("hello");
+                break;
+            case "world":
+                System.out.println("world");
+                break;
+            default:
+                System.out.println("default");
+        }
+    }
 }

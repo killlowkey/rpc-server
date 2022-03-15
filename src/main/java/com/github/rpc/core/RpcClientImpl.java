@@ -50,13 +50,11 @@ public class RpcClientImpl implements RpcClient {
     // 存放响应
     private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(128);
     // 异步请求线程池
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(5);
-
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(8);
 
     private Bootstrap bootstrap;
     private Channel channel;
     private boolean isRunning;
-    private ScheduledExecutorService scheduledService;
     private Date lastHealthCheckDate;
     private int healthCheckFailureCount;
 
@@ -77,8 +75,9 @@ public class RpcClientImpl implements RpcClient {
     }
 
     private void initHealthCheck() {
-        this.scheduledService = Executors.newSingleThreadScheduledExecutor(new HealthCheckThreadFactory());
-        this.scheduledService.scheduleWithFixedDelay(this, 0, DEFAULT_HEALTH_CHECK_INTERVAL, TimeUnit.SECONDS);
+        ScheduledExecutorService scheduledService =
+                Executors.newSingleThreadScheduledExecutor(new HealthCheckThreadFactory());
+        scheduledService.scheduleWithFixedDelay(this, 0, DEFAULT_HEALTH_CHECK_INTERVAL, TimeUnit.SECONDS);
     }
 
     @Override
@@ -184,16 +183,22 @@ public class RpcClientImpl implements RpcClient {
 
     @Override
     public void close() {
-        try {
-            this.isRunning = false;
-            // 关闭 channel
-            this.channel.close().sync();
-            // 释放连接池资源
-            this.group.shutdownGracefully().sync();
-            this.executorService.shutdown();
-        } catch (InterruptedException e) {
-            Logger.error("stop rpc client failed, ex: {}", e.getMessage());
-            e.printStackTrace();
+        synchronized (this) {
+            if (!this.isRunning) {
+                return;
+            }
+
+            try {
+                this.isRunning = false;
+                // 关闭 channel
+                this.channel.close().sync();
+                // 释放连接池资源
+                this.group.shutdownGracefully().sync();
+                this.executorService.shutdown();
+            } catch (InterruptedException e) {
+                Logger.error("stop rpc client failed, ex: {}", e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
