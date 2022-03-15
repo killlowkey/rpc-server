@@ -6,8 +6,6 @@ import com.github.rpc.core.handle.RpcRequestHandler;
 import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -15,15 +13,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.json.JsonObjectDecoder;
-import io.netty.handler.ssl.SslContext;
 import org.tinylog.Logger;
 
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Ray
@@ -34,9 +32,12 @@ public class RpcServerImpl implements RpcServer {
     private final EventLoopGroup boss = new NioEventLoopGroup();
     private final EventLoopGroup worker = new NioEventLoopGroup();
     private final List<NettyServerProcessor> processors = new ArrayList<>();
+    private final Set<RpcServerListener> listenerSet = new HashSet<>();
+
     private ServerBootstrap bootstrap;
     private MethodInvokeDispatcher dispatcher;
     private InetSocketAddress address;
+    private boolean runnable;
 
     public RpcServerImpl(MethodInvokeDispatcher dispatcher, InetSocketAddress address) {
         this.dispatcher = dispatcher;
@@ -105,6 +106,9 @@ public class RpcServerImpl implements RpcServer {
         try {
             // 等待绑定完成
             ChannelFuture channelFuture = bootstrap.bind(this.address).sync();
+            this.runnable = true;
+            // 调用启动监听器
+            this.listenerSet.forEach(RpcServerListener::onStartCompleted);
             Logger.info("start rpc server success");
             // 等待关闭
             channelFuture.channel().closeFuture().sync();
@@ -117,18 +121,30 @@ public class RpcServerImpl implements RpcServer {
 
     @Override
     public void stop() {
-        try {
-            this.boss.shutdownGracefully().sync();
-            this.worker.shutdownGracefully().sync();
-            Logger.info("stop rpc server success");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        synchronized (this) {
+            if (this.runnable) {
+                try {
+                    this.runnable = false;
+                    // 调用停止监听器
+                    this.listenerSet.forEach(RpcServerListener::onStopCompleted);
+                    this.boss.shutdownGracefully().sync();
+                    this.worker.shutdownGracefully().sync();
+                    Logger.info("stop rpc server success");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     @Override
-    public void addListener() {
+    public void addListener(RpcServerListener listener) {
+        this.listenerSet.add(listener);
+    }
 
+    @Override
+    public boolean isRunnable() {
+        return this.runnable;
     }
 
     @Override

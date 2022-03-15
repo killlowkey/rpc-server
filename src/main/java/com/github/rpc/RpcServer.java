@@ -1,6 +1,7 @@
 package com.github.rpc;
 
 import com.github.rpc.core.NettyServerProcessor;
+import com.github.rpc.core.RpcServerListener;
 
 /**
  * @author Ray
@@ -12,7 +13,9 @@ public interface RpcServer extends SslOperation {
 
     void stop();
 
-    void addListener();
+    void addListener(RpcServerListener listener);
+
+    boolean isRunnable();
 
     void addProcessor(NettyServerProcessor processor);
 

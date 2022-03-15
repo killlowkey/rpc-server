@@ -84,15 +84,15 @@ public class RpcLoadBalanceClientImpl extends RpcClientImpl {
     }
 
     @Override
-    public boolean isRunning() {
+    public boolean isRunnable() {
         // 遍历所有的 rpc client 是否启动
         for (RpcClient rpcClient : this.rpcClients) {
-            if (!rpcClient.isRunning()) {
-                return false;
+            if (rpcClient.isRunnable()) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     @Override

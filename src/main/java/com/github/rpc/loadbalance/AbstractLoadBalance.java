@@ -23,7 +23,7 @@ public abstract class AbstractLoadBalance implements LoadBalance {
         // 移除无效的 client
         List<RpcClient> failedClients = this.rpcClients
                 .stream()
-                .filter(c -> !c.isRunning())
+                .filter(c -> c.isRunnable())
                 .collect(Collectors.toList());
         this.rpcClients.removeAll(failedClients);
 

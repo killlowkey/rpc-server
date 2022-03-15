@@ -203,8 +203,8 @@ public class RpcClientImpl implements RpcClient {
     }
 
     @Override
-    public boolean isRunning() {
-        return this.isRunning;
+    public boolean isRunnable() {
+        return !this.isRunning;
     }
 
     @Override

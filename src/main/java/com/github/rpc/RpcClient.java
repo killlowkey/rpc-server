@@ -3,7 +3,6 @@ package com.github.rpc;
 import com.github.rpc.core.NettyClientProcessor;
 import com.github.rpc.core.RpcRequest;
 import com.github.rpc.core.RpcResponse;
-import io.netty.handler.ssl.SslContext;
 
 import java.util.concurrent.Future;
 
@@ -23,5 +22,5 @@ public interface RpcClient extends InvokeOperation, SslOperation, HealthCheck {
 
     void close();
 
-    boolean isRunning();
+    boolean isRunnable();
 }

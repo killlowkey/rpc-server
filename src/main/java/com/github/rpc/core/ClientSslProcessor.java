@@ -40,17 +40,4 @@ public class ClientSslProcessor implements NettyClientProcessor {
         channel.pipeline().addFirst("ssl", new SslHandler(engine));  //4
     }
 
-    public static void main(String[] args) {
-        String name = "hello";
-        switch (name) {
-            case "hello":
-                System.out.println("hello");
-                break;
-            case "world":
-                System.out.println("world");
-                break;
-            default:
-                System.out.println("default");
-        }
-    }
 }

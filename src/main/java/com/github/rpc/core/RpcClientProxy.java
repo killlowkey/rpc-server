@@ -2,7 +2,6 @@ package com.github.rpc.core;
 
 import com.github.rpc.RpcClient;
 import com.github.rpc.loadbalance.LoadBalanceStrategy;
-import io.netty.handler.ssl.SslContext;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -95,7 +94,7 @@ public class RpcClientProxy {
     }
 
     private void waitStartClient() {
-        while (!this.rpcClient.isRunning()) {
+        while (this.rpcClient.isRunnable()) {
             try {
                 Thread.sleep(10L);
             } catch (InterruptedException e) {
