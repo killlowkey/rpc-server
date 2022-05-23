@@ -9,7 +9,8 @@ import com.github.rpc.serializer.JsonRpcResponseCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -20,6 +21,8 @@ import java.util.List;
  * @date created in 2022/3/5 10:44
  */
 public class RpcRequestCodec extends ByteToMessageCodec<RpcRequest> {
+
+    private static final Logger logger = LoggerFactory.getLogger(RpcRequestCodec.class);
 
     private final JsonRpcRequestCodec codec = new JsonRpcRequestCodec();
 
@@ -35,8 +38,8 @@ public class RpcRequestCodec extends ByteToMessageCodec<RpcRequest> {
             RpcRequest request = this.codec.deserializer(in);
             out.add(request);
         } catch (JsonProcessingException ex) {
-            if (Logger.isDebugEnabled()) {
-                Logger.debug("parse {} error, ex：{}", in.toString(), ex.getMessage());
+            if (logger.isDebugEnabled()) {
+                logger.debug("parse {} error, ex：{}", in.toString(), ex.getMessage());
             }
 
             // 写回客户端，因为该 Handler 前面没有响应编码器，所以需要手动编码

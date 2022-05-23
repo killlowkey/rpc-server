@@ -6,7 +6,8 @@ import com.github.rpc.serializer.JsonRpcResponseCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ import java.util.List;
  * @date created in 2022/3/5 10:44
  */
 public class RpcResponseCodec extends ByteToMessageCodec<RpcResponse> {
+    private static final Logger logger = LoggerFactory.getLogger(RpcResponseCodec.class);
 
     private final JsonRpcResponseCodec codec = new JsonRpcResponseCodec();
 
@@ -35,8 +37,8 @@ public class RpcResponseCodec extends ByteToMessageCodec<RpcResponse> {
             RpcResponse response = this.codec.deserializer(in);
             out.add(response);
         } catch (JsonProcessingException ex) {
-            if (Logger.isDebugEnabled()) {
-                Logger.debug("parse {} error, ex：{}", in.toString(), ex.getMessage());
+            if (logger.isDebugEnabled()) {
+                logger.debug("parse {} error, ex：{}", in.toString(), ex.getMessage());
             }
         }
     }

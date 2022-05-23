@@ -5,7 +5,8 @@ import com.github.rpc.invoke.asm.AsmGenerator;
 import com.github.rpc.invoke.mh.MethodHandleMethodInvokeDispatcher;
 import com.github.rpc.invoke.reflect.ReflectMethodInvokeDispatcher;
 import com.github.rpc.utils.RpcUtil;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Map;
  * @date created in 2022/3/3 8:11
  */
 public class MethodInvokeDispatcherBuilder {
+    private static final Logger logger = LoggerFactory.getLogger(MethodInvokeDispatcherBuilder.class);
 
     private InvokeType type = InvokeType.ASM;
     private final List<MethodInvokeListener> listeners = new ArrayList<>();
@@ -64,8 +66,8 @@ public class MethodInvokeDispatcherBuilder {
         Map<String, MethodContext> rpcComponents = this.configuration.getRpcComponents();
         rpcComponents.forEach((name, context) -> {
             RpcUtil.registerMethod(name, context.getMethod());
-            if (Logger.isDebugEnabled()) {
-                Logger.debug("register [{}] rpc to server", name);
+            if (logger.isDebugEnabled()) {
+                logger.debug("register [{}] rpc to server", name);
             }
         });
 

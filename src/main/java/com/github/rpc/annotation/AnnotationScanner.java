@@ -3,7 +3,8 @@ package com.github.rpc.annotation;
 import cn.hutool.core.util.ClassUtil;
 import com.github.rpc.core.RpcServiceConfiguration;
 import io.netty.util.internal.StringUtil;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -17,6 +18,7 @@ import java.util.*;
  * @date created in 2022/3/4 7:31
  */
 public class AnnotationScanner {
+    private static final Logger logger = LoggerFactory.getLogger(AnnotationScanner.class);
 
     private final String packageName;
     private static final List<AnnotationProcessor> PROCESSORS = new ArrayList<>();
@@ -49,7 +51,7 @@ public class AnnotationScanner {
         Set<Class<?>> components = new HashSet<>(this.scanClass);
         // packName 不为空，扫描包下所有的类
         if (!StringUtil.isNullOrEmpty(this.packageName)) {
-            Logger.info("scan {} package components", this.packageName);
+            logger.info("scan {} package components", this.packageName);
             components.addAll(ClassUtil.scanPackage(this.packageName));
         }
 

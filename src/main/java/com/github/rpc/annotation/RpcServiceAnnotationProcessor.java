@@ -3,7 +3,8 @@ package com.github.rpc.annotation;
 import com.github.rpc.core.RpcServiceConfiguration;
 import com.github.rpc.invoke.MethodContext;
 import com.github.rpc.utils.MethodUtil;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -16,20 +17,21 @@ import java.util.Map;
  * @date created in 2022/3/4 12:51
  */
 public class RpcServiceAnnotationProcessor implements AnnotationProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(RpcServiceAnnotationProcessor.class);
 
     private RpcServiceConfiguration configuration;
 
     @Override
     public void process(ScanContext context, Annotation annotation) {
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("process [{}] class @RpcService annotation",
+        if (logger.isDebugEnabled()) {
+            logger.debug("process [{}] class @RpcService annotation",
                     context.getClazz().getSimpleName());
         }
 
         RpcService rpcService = (RpcService) annotation;
         this.configuration = context.getConfiguration();
         if (this.configuration == null) {
-            Logger.error("configuration is null, RpcServiceAnnotationProcessor execute failed");
+            logger.error("configuration is null, RpcServiceAnnotationProcessor execute failed");
             throw new RuntimeException("configuration is null");
         }
 
@@ -49,10 +51,10 @@ public class RpcServiceAnnotationProcessor implements AnnotationProcessor {
             Constructor<?> constructor = clazz.getDeclaredConstructor();
             return constructor.newInstance();
         } catch (NoSuchMethodException e) {
-            Logger.error("not found {} default constructor", clazz.getSimpleName());
+            logger.error("not found {} default constructor", clazz.getSimpleName());
             e.printStackTrace();
         } catch (Exception e) {
-            Logger.error("instance {} object failed  ", clazz.getSimpleName());
+            logger.error("instance {} object failed  ", clazz.getSimpleName());
             e.printStackTrace();
         }
 

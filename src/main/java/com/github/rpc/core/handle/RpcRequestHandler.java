@@ -11,13 +11,16 @@ import com.github.rpc.utils.RpcUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.internal.StringUtil;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Ray
  * @date created in 2022/3/5 13:05
  */
 public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
+
+    private static final Logger logger = LoggerFactory.getLogger(RpcRequestHandler.class);
 
     private final MethodInvokeDispatcher dispatcher;
     private final JsonParamAdapter jsonParamAdapter = new JsonParamAdapter();
@@ -36,8 +39,8 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
             return;
         }
 
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("handle [{}] rpc request", rpcRequest.getName());
+        if (logger.isDebugEnabled()) {
+            logger.debug("handle [{}] rpc request", rpcRequest.getName());
         }
 
         try {

@@ -3,7 +3,8 @@ package com.github.rpc.annotation;
 import com.github.rpc.core.RpcServiceConfiguration;
 import com.github.rpc.invoke.MethodContext;
 import com.github.rpc.utils.MethodUtil;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -21,19 +22,21 @@ import java.util.Map;
  */
 public class AliasAnnotationProcessor implements AnnotationProcessor {
 
+    private static final Logger logger = LoggerFactory.getLogger(AliasAnnotationProcessor.class);
+    
     @Override
     public void process(ScanContext context, Annotation annotation) {
         Alias alias = (Alias) annotation;
 
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("process [{}#{}] method @Alias annotation",
+        if (logger.isDebugEnabled()) {
+            logger.debug("process [{}#{}] method @Alias annotation",
                     context.getClazz().getSimpleName(), context.getMethod().getName());
         }
 
         if (alias.value().isBlank()) {
-            if (Logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 String name = context.getMethod().getName();
-                Logger.debug("{} method alias value is null, alias processor exit", name);
+                logger.debug("{} method alias value is null, alias processor exit", name);
             }
             return;
         }
@@ -76,8 +79,8 @@ public class AliasAnnotationProcessor implements AnnotationProcessor {
 
     private void putAliasComponent(String name, MethodContext context,
                                    Map<String, MethodContext> rpcComponents) {
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("create {} alias rpc component", name);
+        if (logger.isDebugEnabled()) {
+            logger.debug("create {} alias rpc component", name);
         }
         MethodContext newContext = context.clone();
         newContext.setName(name);

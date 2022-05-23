@@ -1,8 +1,8 @@
 package com.github.rpc.loadbalance;
 
 import com.github.rpc.RpcClient;
-import org.tinylog.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
  * @date created in 2022/3/9 21:17
  */
 public abstract class AbstractLoadBalance implements LoadBalance {
+    
+    private static final Logger logger = LoggerFactory.getLogger(AbstractLoadBalance.class);
 
     protected final List<RpcClient> rpcClients;
 
@@ -32,8 +34,8 @@ public abstract class AbstractLoadBalance implements LoadBalance {
         }
 
         RpcClient rpcClient = doSelect();
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("{} select {} rpcClient", this.getClass().getSimpleName(), rpcClient);
+        if (logger.isDebugEnabled()) {
+            logger.debug("{} select {} rpcClient", this.getClass().getSimpleName(), rpcClient);
         }
         return rpcClient;
     }

@@ -5,7 +5,8 @@ import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.invoke.MethodInvokeListener;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -22,6 +23,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @date created in 2022/3/3 12:40
  */
 public class AsmGenerator {
+    private static final Logger logger = LoggerFactory.getLogger(AsmGenerator.class);
 
     private static final String CLASS_NAME = "com/github/rpc/invoke/asm/AsmMethodInvokeDispatcher";
     private static final String SUPER_CLASS = "com/github/rpc/invoke/AbstractMethodInvokeDispatcher";
@@ -100,10 +102,10 @@ public class AsmGenerator {
             constructor.setAccessible(true);
             return (MethodInvokeDispatcher) constructor.newInstance(this.methodContextMap, this.listeners);
         } catch (NoSuchMethodException e) {
-            Logger.error("obtain constructor failed：{}", e.getMessage());
+            logger.error("obtain constructor failed：{}", e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
-            Logger.error("instance object failed：{}", e.getMessage());
+            logger.error("instance object failed：{}", e.getMessage());
             e.printStackTrace();
         }
 
@@ -116,7 +118,7 @@ public class AsmGenerator {
         try {
             return this.classLoader.loadClass(className);
         } catch (ClassNotFoundException e) {
-            Logger.error("load %s class failed", className);
+            logger.error("load %s class failed", className);
             e.printStackTrace();
         }
 

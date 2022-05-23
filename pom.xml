@@ -15,10 +15,10 @@
         <lombok.version>1.18.24</lombok.version>
         <tinylog.version>2.4.1</tinylog.version>
         <netty.version>4.1.77.Final</netty.version>
-        <hutool.version>5.7.22</hutool.version>
-        <jackson.version>2.13.1</jackson.version>
+        <hutool.version>5.8.0</hutool.version>
+        <jackson.version>2.13.3</jackson.version>
+        <logback.version>1.2.11</logback.version>
     </properties>
-
 
     <dependencies>
         <dependency>
@@ -40,15 +40,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.tinylog</groupId>
-            <artifactId>tinylog-api</artifactId>
-            <version>${tinylog.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.tinylog</groupId>
-            <artifactId>tinylog-impl</artifactId>
-            <version>${tinylog.version}</version>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
         </dependency>
 
         <dependency>

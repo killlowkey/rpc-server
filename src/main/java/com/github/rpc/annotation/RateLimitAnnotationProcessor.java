@@ -3,7 +3,8 @@ package com.github.rpc.annotation;
 import com.github.rpc.core.RpcServiceConfiguration;
 import com.github.rpc.invoke.MethodContext;
 import com.github.rpc.utils.MethodUtil;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -20,6 +21,8 @@ import java.util.Map;
  */
 public class RateLimitAnnotationProcessor implements AnnotationProcessor {
 
+    private static final Logger logger = LoggerFactory.getLogger(RateLimitAnnotationProcessor.class);
+
     @Override
     public void process(ScanContext context, Annotation annotation) {
         RateLimit rateLimit = (RateLimit) annotation;
@@ -34,8 +37,8 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
 
     private void processClass(ScanContext context, RateLimit rateLimit) {
 
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("process [{}] class @RateLimit annotation",
+        if (logger.isDebugEnabled()) {
+            logger.debug("process [{}] class @RateLimit annotation",
                     context.getClazz().getSimpleName());
         }
 
@@ -49,8 +52,8 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
             if (name.startsWith(rpcService.value())) {
                 Class<?> declaringClass = methodContext.getMethod().getDeclaringClass();
                 if (declaringClass == clazz) {
-                    if (Logger.isDebugEnabled()) {
-                        Logger.debug("add {} rate limit, limit={}, timeUnit={}", name,
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("add {} rate limit, limit={}, timeUnit={}", name,
                                 rateLimit.limit(), rateLimit.value());
                     }
                     RateLimitEntry rateLimitEntry = new RateLimitEntry(name, rateLimit.limit(), rateLimit.value());
@@ -61,8 +64,8 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
     }
 
     private void processMethod(ScanContext context, RateLimit rateLimit) {
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("process [{}#{}] method @RateLimit annotation",
+        if (logger.isDebugEnabled()) {
+            logger.debug("process [{}#{}] method @RateLimit annotation",
                     context.getClazz().getSimpleName(), context.getMethod().getName());
         }
 
@@ -90,8 +93,8 @@ public class RateLimitAnnotationProcessor implements AnnotationProcessor {
         String name = methodContext.getName();
         RateLimitEntry rateLimitEntry = new RateLimitEntry(name, rateLimit.limit(), rateLimit.value());
 
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("add {} rate limit, limit={}, timeUnit={}", name,
+        if (logger.isDebugEnabled()) {
+            logger.debug("add {} rate limit, limit={}, timeUnit={}", name,
                     rateLimit.limit(), rateLimit.value());
         }
 

@@ -3,7 +3,8 @@ package com.github.rpc.invoke.mh;
 import com.github.rpc.invoke.AbstractMethodInvokeDispatcher;
 import com.github.rpc.invoke.MethodContext;
 import com.github.rpc.invoke.MethodInvokeListener;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,6 +20,7 @@ import java.util.Map;
  * @date created in 2022/3/3 8:52
  */
 public class MethodHandleMethodInvokeDispatcher extends AbstractMethodInvokeDispatcher {
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandleMethodInvokeDispatcher.class);
 
     private final Map<String, MethodHandle> handleMap = new HashMap<>();
 
@@ -43,7 +45,7 @@ public class MethodHandleMethodInvokeDispatcher extends AbstractMethodInvokeDisp
                 // 创建 MethodHandle
                 methodHandle = lookup.findVirtual(method.getDeclaringClass(), methodName, methodType);
             } catch (NoSuchMethodException | IllegalAccessException e) {
-                Logger.error("create {} methodHandle failed：{}", methodName, e.getMessage());
+                logger.error("create {} methodHandle failed：{}", methodName, e.getMessage());
                 e.printStackTrace();
             }
 
@@ -64,7 +66,7 @@ public class MethodHandleMethodInvokeDispatcher extends AbstractMethodInvokeDisp
             // 调用方法
             return methodHandle.invokeWithArguments(Arrays.asList(params));
         } catch (Throwable throwable) {
-            Logger.error("execute {} method failed", methodName);
+            logger.error("execute {} method failed", methodName);
             throw throwable;
         }
     }

@@ -2,7 +2,8 @@ package com.github.rpc.annotation;
 
 import com.github.rpc.core.RpcServiceConfiguration;
 import lombok.Data;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
@@ -12,6 +13,8 @@ import java.lang.reflect.Method;
  */
 @Data
 public class ScanContext {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ScanContext.class);
 
     // 需要加上配置类信息
     private Class<?> clazz;
@@ -33,7 +36,7 @@ public class ScanContext {
 
     public RpcServiceConfiguration getConfiguration() {
         if (configuration == null) {
-            Logger.error("configuration is null in ScanContext");
+            logger.error("configuration is null in ScanContext");
             throw new RuntimeException("configuration is null");
         }
         return configuration;

@@ -1,8 +1,8 @@
 package com.github.rpc.invoke.asm;
 
 import org.objectweb.asm.ClassWriter;
-import org.tinylog.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -15,6 +15,8 @@ import java.util.Map;
  * @date created in 2022/3/3 12:36
  */
 public class AsmClassLoader extends ClassLoader {
+
+    private static final Logger logger = LoggerFactory.getLogger(AsmClassLoader.class);
 
     private final Map<String, ClassWriter> classWriterMap = new HashMap<>();
     private boolean save;
@@ -47,18 +49,18 @@ public class AsmClassLoader extends ClassLoader {
 
             Class<?> result = super.defineClass(name, byteCodeData, 0, byteCodeData.length);
 
-            if (Logger.isDebugEnabled()) {
-                Logger.debug("load {} class success from ClassWriter", result.getName());
+            if (logger.isDebugEnabled()) {
+                logger.debug("load {} class success from ClassWriter", result.getName());
             }
 
             if (this.save) {
                 try (FileOutputStream fos = new FileOutputStream(result.getSimpleName() + ".class")) {
                     fos.write(byteCodeData);
-                    if (Logger.isDebugEnabled()) {
-                        Logger.debug("save {} class to disk success", result.getName());
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("save {} class to disk success", result.getName());
                     }
                 } catch (IOException ex) {
-                    Logger.error("save {} class failed，ex：{}",
+                    logger.error("save {} class failed，ex：{}",
                             result.getSimpleName(), ex.getMessage());
                 }
             }

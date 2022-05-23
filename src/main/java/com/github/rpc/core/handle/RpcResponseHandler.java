@@ -3,8 +3,8 @@ package com.github.rpc.core.handle;
 import com.github.rpc.core.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.tinylog.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;;
 import java.util.Queue;
 
 /**
@@ -15,6 +15,8 @@ import java.util.Queue;
  */
 public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse> {
 
+    private static final Logger logger = LoggerFactory.getLogger(RpcResponseHandler.class);
+
     private final Queue<RpcResponse> responseReceivers;
 
     public RpcResponseHandler(Queue<RpcResponse> responseReceivers) {
@@ -23,8 +25,8 @@ public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse>
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcResponse response) throws Exception {
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("offer request#{} response to responseReceivers queue", response.getId());
+        if (logger.isDebugEnabled()) {
+            logger.debug("offer request#{} response to responseReceivers queue", response.getId());
         }
 
         // 将响应放入到响应队列中

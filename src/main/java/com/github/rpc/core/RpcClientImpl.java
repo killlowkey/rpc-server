@@ -20,7 +20,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.json.JsonObjectDecoder;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * @date created in 2022/3/6 9:55
  */
 public class RpcClientImpl implements RpcClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(RpcClientImpl.class);
 
     private static final String DEFAULT_VERSION = "2.0";
     private static final int DEFAULT_HEALTH_CHECK_INTERVAL = 30;
@@ -101,8 +104,8 @@ public class RpcClientImpl implements RpcClient {
             lock.lock();
             // 没有响应直接发送请求
             if (this.responseReceivers.isEmpty()) {
-                if (Logger.isDebugEnabled()) {
-                    Logger.debug("send request#{} to rpc server", rpcRequest.getId());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("send request#{} to rpc server", rpcRequest.getId());
                 }
                 this.channel.writeAndFlush(rpcRequest);
             } else {
@@ -133,8 +136,8 @@ public class RpcClientImpl implements RpcClient {
     private void sendNextRequest() {
         if (!sendingQueue.isEmpty()) {
             RpcRequest rpcRequest = this.sendingQueue.poll();
-            if (Logger.isDebugEnabled()) {
-                Logger.debug("send request#{} to rpc server", rpcRequest.getId());
+            if (logger.isDebugEnabled()) {
+                logger.debug("send request#{} to rpc server", rpcRequest.getId());
             }
             this.channel.writeAndFlush(rpcRequest);
         }
@@ -167,8 +170,8 @@ public class RpcClientImpl implements RpcClient {
         ChannelFuture channelFuture = bootstrap.connect().sync();
         this.channel = channelFuture.channel();
 
-        if (Logger.isDebugEnabled()) {
-            Logger.debug("rpc client start success, remote server address {}",
+        if (logger.isDebugEnabled()) {
+            logger.debug("rpc client start success, remote server address {}",
                     this.channel.remoteAddress());
         }
 
@@ -196,7 +199,7 @@ public class RpcClientImpl implements RpcClient {
                 this.group.shutdownGracefully().sync();
                 this.executorService.shutdown();
             } catch (InterruptedException e) {
-                Logger.error("stop rpc client failed, ex: {}", e.getMessage());
+                logger.error("stop rpc client failed, ex: {}", e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -235,7 +238,7 @@ public class RpcClientImpl implements RpcClient {
 
     private boolean isReturnTypeInvalid(Type returnType) {
         if (returnType == null || returnType == Void.class) {
-            Logger.warn("Server returned result but returnType is null");
+            logger.warn("Server returned result but returnType is null");
             return true;
         }
         return false;
@@ -294,9 +297,9 @@ public class RpcClientImpl implements RpcClient {
             sendRequest(rpcRequest);
             updateHealthCheckInfo();
         } catch (Exception exception) {
-            Logger.error("health check failed, ex: {}", exception.getMessage());
+            logger.error("health check failed, ex: {}", exception.getMessage());
             if (++healthCheckFailureCount >= 3) {
-                Logger.info("close {} client, health check failure count >= 3", this.toString());
+                logger.info("close {} client, health check failure count >= 3", this.toString());
                 this.close();
             }
         }

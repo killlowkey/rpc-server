@@ -1,6 +1,7 @@
 package com.github.rpc.utils;
 
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.File;
@@ -12,6 +13,8 @@ import java.security.KeyStore;
  * @date created in 2022/3/7 10:25
  */
 public class SslContextUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(SslContextUtil.class);
 
     public static SSLContext getSslContext(File jksFile, String keyStorePass) {
         try {
@@ -38,7 +41,7 @@ public class SslContextUtil {
             keyFac.init(ks, keyStorePass.toCharArray());
             return keyFac.getKeyManagers();
         } catch (Exception ex) {
-            Logger.error("create KeyManager failed, ex：{}", ex.getMessage());
+            logger.error("create KeyManager failed, ex：{}", ex.getMessage());
             throw ex;
         }
     }
@@ -52,7 +55,7 @@ public class SslContextUtil {
             factory.init(ks);
             return factory.getTrustManagers();
         } catch (Exception ex) {
-            Logger.error("create TrustManager failed, ex：{}", ex.getMessage());
+            logger.error("create TrustManager failed, ex：{}", ex.getMessage());
             throw ex;
         }
     }

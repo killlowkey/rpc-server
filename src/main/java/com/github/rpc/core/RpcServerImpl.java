@@ -11,7 +11,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.json.JsonObjectDecoder;
-import org.tinylog.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -25,6 +26,7 @@ import java.util.Set;
  * @date created in 2022/3/5 12:51
  */
 public class RpcServerImpl implements RpcServer {
+    private static final Logger logger = LoggerFactory.getLogger(RpcServerImpl.class);
 
     private final EventLoopGroup boss = new NioEventLoopGroup();
     private final EventLoopGroup worker = new NioEventLoopGroup();
@@ -105,11 +107,11 @@ public class RpcServerImpl implements RpcServer {
             Channel channel = bootstrap.bind(this.address).addListener(future -> {
                 if (future.isSuccess()) {
                     this.runnable = true;
-                    Logger.info("start rpc server success");
+                    logger.info("start rpc server success");
                     // 调用启动监听器
                     this.listenerSet.forEach(RpcServerListener::onStartCompleted);
                 } else {
-                    Logger.error("start rep server failed, error：{}", future.cause().getMessage());
+                    logger.error("start rep server failed, error：{}", future.cause().getMessage());
                 }
             }).sync().channel();
             // 等待关闭
@@ -131,7 +133,7 @@ public class RpcServerImpl implements RpcServer {
                     this.listenerSet.forEach(RpcServerListener::onStopCompleted);
                     this.boss.shutdownGracefully().sync();
                     this.worker.shutdownGracefully().sync();
-                    Logger.info("stop rpc server success");
+                    logger.info("stop rpc server success");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
