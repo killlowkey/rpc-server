@@ -6,10 +6,7 @@ import com.github.rpc.core.handle.RpcRequestHandler;
 import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -105,13 +102,18 @@ public class RpcServerImpl implements RpcServer {
 
         try {
             // 等待绑定完成
-            ChannelFuture channelFuture = bootstrap.bind(this.address).sync();
-            this.runnable = true;
-            // 调用启动监听器
-            this.listenerSet.forEach(RpcServerListener::onStartCompleted);
-            Logger.info("start rpc server success");
+            Channel channel = bootstrap.bind(this.address).addListener(future -> {
+                if (future.isSuccess()) {
+                    this.runnable = true;
+                    Logger.info("start rpc server success");
+                    // 调用启动监听器
+                    this.listenerSet.forEach(RpcServerListener::onStartCompleted);
+                } else {
+                    Logger.error("start rep server failed, error：{}", future.cause().getMessage());
+                }
+            }).sync().channel();
             // 等待关闭
-            channelFuture.channel().closeFuture().sync();
+            channel.closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {

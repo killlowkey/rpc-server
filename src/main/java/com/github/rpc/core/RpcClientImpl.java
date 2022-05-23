@@ -83,7 +83,7 @@ public class RpcClientImpl implements RpcClient {
     @Override
     public RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception {
         if (!this.isRunning) {
-            throw new IllegalStateException("rpc client disconnected");
+            throw new IllegalStateException("send request failed, rpc client disconnected");
         }
 
         // 发送请求
