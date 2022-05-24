@@ -2,6 +2,7 @@ package com.github.rpc.core;
 
 import com.github.rpc.RpcClient;
 import com.github.rpc.loadbalance.LoadBalanceStrategy;
+import com.github.rpc.serializer.Serializer;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -39,6 +40,11 @@ public class RpcClientProxy {
 
     public RpcClientProxy enableSsl(File jksFile, String keyStorePass) {
         this.rpcClient.enableSsl(jksFile, keyStorePass, false);
+        return this;
+    }
+
+    public RpcClientProxy serializer(Serializer serializer) {
+        this.rpcClient.setSerializer(serializer);
         return this;
     }
 

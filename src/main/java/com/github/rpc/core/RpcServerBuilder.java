@@ -11,6 +11,7 @@ import com.github.rpc.plugins.health.HealthRequestInterceptor;
 import com.github.rpc.plugins.limit.RateLimitInterceptor;
 import com.github.rpc.plugins.statistic.MethodInvocationStatistics;
 import com.github.rpc.plugins.statistic.Storage;
+import com.github.rpc.serializer.Serializer;
 import io.netty.channel.ChannelOption;
 import io.netty.util.internal.StringUtil;
 
@@ -26,7 +27,6 @@ import java.util.Map;
  * @date created in 2022/3/5 19:10
  */
 public class RpcServerBuilder {
-
     private String packageName;
     private InvokeType type = InvokeType.ASM;
     private boolean saveAsmByteCode;
@@ -103,6 +103,11 @@ public class RpcServerBuilder {
 
     public RpcServerBuilder enableSSL(File jksFile, String keyStorePass, boolean needClientAuth) {
         this.rpcServer.enableSsl(jksFile, keyStorePass, needClientAuth);
+        return this;
+    }
+
+    public RpcServerBuilder serializer(Serializer serializer) {
+        this.rpcServer.serializer(serializer);
         return this;
     }
 

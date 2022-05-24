@@ -1,0 +1,19 @@
+// 协议版本
+syntax = "proto3";
+
+option java_multiple_files = true;
+// 生成包名
+option java_package = "com.github.rpc.serializer.protobuf";
+
+message PbRpcRequest {
+  string id = 1;
+  string name = 2;
+  bytes params = 3;
+}
+
+message PbRpcResponse {
+  string id = 1;
+  int32 code = 2;
+  string message = 3;
+  bytes result = 4;
+}

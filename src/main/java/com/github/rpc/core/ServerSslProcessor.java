@@ -13,7 +13,7 @@ import java.util.Objects;
  * @author Ray
  * @date created in 2022/3/7 8:34
  */
-public class ServerSslProcessor implements NettyServerProcessor {
+public class ServerSslProcessor implements NettyProcessor {
 
     private final File jksFile;
     private final boolean needClientAuth;

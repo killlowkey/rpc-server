@@ -3,7 +3,9 @@ package com.github.rpc.core;
 import com.github.rpc.RpcClient;
 import com.github.rpc.RpcServer;
 import com.github.rpc.annotation.RpcComponent02;
+import com.github.rpc.exceptions.ClientInvocationException;
 import com.github.rpc.invoke.InvokeType;
+import com.github.rpc.serializer.Serializer;
 import io.netty.channel.ChannelOption;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,15 +33,17 @@ public class RpcClientImplTest {
                 .bind(8989)
                 .registerComponent(RpcComponent02.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
+                .serializer(Serializer.PROTOBUF)
                 .build();
 
         new Thread(rpcServer::start).start();
-        Thread.sleep(100L);
+        Thread.sleep(2000L);
     }
 
     @Before
     public void startClient() throws Throwable {
         rpcClient = new RpcClientImpl(new InetSocketAddress("127.0.0.1", 8989));
+        rpcClient.setSerializer(Serializer.PROTOBUF);
         new Thread(() -> {
             try {
                 rpcClient.start();
@@ -47,19 +51,21 @@ public class RpcClientImplTest {
                 exception.printStackTrace();
             }
         }).start();
-
         Thread.sleep(2000L);
     }
 
-    @Test
+    // 期待调用异常
+    @Test(expected = ClientInvocationException.class)
     public void requestTest() throws Throwable {
         String helloResult = rpcClient.invoke("RpcComponent02/hello", null, String.class);
         assertEquals("hello world", helloResult);
 
-        rpcClient.invoke("RpcComponent02/helloMethod", null);
         String[]  getArrayValueResult = rpcClient.invoke("RpcComponent02/getArrayValue",
                 new Object[]{new Integer[]{1, 2, 3}}, String[].class);
         assertArrayEquals(new String[]{"hello", "world"}, getArrayValueResult);
+
+        // 方法不存在
+        rpcClient.invoke("test", null);
     }
 
 }

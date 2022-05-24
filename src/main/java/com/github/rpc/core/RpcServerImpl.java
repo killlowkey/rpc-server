@@ -1,16 +1,14 @@
 package com.github.rpc.core;
 
 import com.github.rpc.RpcServer;
-import com.github.rpc.core.handle.RpcRequestCodec;
 import com.github.rpc.core.handle.RpcRequestHandler;
-import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
+import com.github.rpc.serializer.Serializer;
+import com.github.rpc.serializer.SerializerProcessor;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.json.JsonObjectDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +28,10 @@ public class RpcServerImpl implements RpcServer {
 
     private final EventLoopGroup boss = new NioEventLoopGroup();
     private final EventLoopGroup worker = new NioEventLoopGroup();
-    private final List<NettyServerProcessor> processors = new ArrayList<>();
+    private final List<NettyProcessor> processors = new ArrayList<>();
     private final Set<RpcServerListener> listenerSet = new HashSet<>();
 
+    private Serializer serializer;
     private ServerBootstrap bootstrap;
     private MethodInvokeDispatcher dispatcher;
     private InetSocketAddress address;
@@ -70,7 +69,7 @@ public class RpcServerImpl implements RpcServer {
         this.dispatcher = dispatcher;
     }
 
-    public void addProcessor(NettyServerProcessor processor) {
+    public void addProcessor(NettyProcessor processor) {
         this.processors.add(processor);
     }
 
@@ -85,20 +84,18 @@ public class RpcServerImpl implements RpcServer {
             throw new IllegalStateException("address cannot be null");
         }
 
-        this.processors.forEach(processor -> processor.process(bootstrap));
+        // 序列化
+        this.serializer = this.serializer == null ? Serializer.JSON : this.serializer;
+        this.processors.add(new SerializerProcessor(serializer, false));
+
+        this.processors.forEach(processor -> processor.processServerBootstrap(bootstrap));
 
         bootstrap.childOption(ChannelOption.SO_KEEPALIVE, true)
-                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                .childHandler(new ChannelInitializer<Channel>() {
                     @Override
-                    protected void initChannel(NioSocketChannel ch) throws Exception {
+                    protected void initChannel(Channel ch) throws Exception {
                         processors.forEach(processor -> processor.processChannel(ch));
-                        ch.pipeline()
-                                .addLast(new JsonObjectDecoder())
-                                // 请求与响应编解码器
-                                .addLast(new RpcRequestCodec())
-                                .addLast(new RpcResponseCodec())
-                                // 处理请求
-                                .addLast(new RpcRequestHandler(dispatcher));
+                        ch.pipeline().addLast(new RpcRequestHandler(dispatcher));
                     }
                 });
 
@@ -154,6 +151,10 @@ public class RpcServerImpl implements RpcServer {
     @Override
     public void enableSsl(File jksFile, String password, boolean needClientAuth) {
         this.addProcessor(new ServerSslProcessor(jksFile, password, needClientAuth));
+    }
+
+    public void serializer(Serializer serializer) {
+        this.serializer = serializer;
     }
 
 }

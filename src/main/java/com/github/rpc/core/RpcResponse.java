@@ -1,60 +1,30 @@
 package com.github.rpc.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.github.rpc.constant.ErrorEnum;
-import com.github.rpc.exceptions.RpcServerException;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * rpc 响应
+ * RPC 请求定义
  *
  * @author Ray
- * @date created in 2022/3/5 9:40
+ * @date created in 2022/5/23 20:19
  */
-@NoArgsConstructor
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class RpcResponse {
+public interface RpcResponse {
+    /**
+     * 响应 id
+     */
+    String getId();
 
-    private String version = "2.0";
-    private String id;
-    private ErrorMsg error;
-    private Object result;
+    /**
+     * 响应码
+     */
+    int getCode();
 
-    public RpcResponse(ErrorMsg error) {
-        this.error = error;
-    }
+    /**
+     * 响应信息
+     */
+    String getMessage();
 
-    public RpcResponse(ErrorEnum errorEnum) {
-        this(new ErrorMsg(errorEnum.getCode(), errorEnum.getMsg()));
-    }
-
-    public RpcResponse(RpcServerException ex) {
-        this.error = new ErrorMsg(ex.getCode(), ex.getMessage());
-    }
-
-    public RpcResponse(String id) {
-        this.id = id;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class ErrorMsg {
-        private long code;
-        private String message;
-        private Object data;
-
-        public ErrorMsg(long code, String message) {
-            this.code = code;
-            this.message = message;
-        }
-
-        public ErrorMsg(ErrorEnum errorEnum) {
-            this.code = errorEnum.getCode();
-            this.message = errorEnum.getMsg();
-        }
-    }
+    /**
+     * 调用结果
+     */
+    Object getResult();
 
 }
