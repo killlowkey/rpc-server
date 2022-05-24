@@ -2,6 +2,7 @@ package com.github.rpc.serializer.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.rpc.core.DefaultRpcResponse;
+import com.github.rpc.core.Metadata;
 import com.github.rpc.core.RpcResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,7 @@ public class JsonRpcResponse {
     int code;
     String message;
     Object result;
+    Metadata metadata;
 
     public static JsonRpcResponse rpcResponseTo(RpcResponse response) {
         JsonRpcResponse jsonRpcResponse = new JsonRpcResponse();
@@ -31,6 +33,7 @@ public class JsonRpcResponse {
         jsonRpcResponse.setCode(response.getCode());
         jsonRpcResponse.setMessage(response.getMessage());
         jsonRpcResponse.setResult(response.getResult());
+        jsonRpcResponse.setMetadata(response.getMetadata());
         return jsonRpcResponse;
     }
 
@@ -44,6 +47,7 @@ public class JsonRpcResponse {
         rpcResponse.setCode(response.getCode());
         rpcResponse.setMessage(response.getMessage());
         rpcResponse.setResult(response.getResult());
+        rpcResponse.setMetadata(response.getMetadata());
         return rpcResponse;
     }
 }

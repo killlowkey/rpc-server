@@ -1,7 +1,6 @@
 package com.github.rpc.example;
 
 import com.github.rpc.core.PersonService;
-import com.github.rpc.core.RpcClientImpl;
 import com.github.rpc.core.RpcClientProxy;
 import com.github.rpc.serializer.Serializer;
 

@@ -2,6 +2,7 @@ package com.github.rpc.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rpc.core.DefaultRpcResponse;
+import com.github.rpc.core.Metadata;
 import com.github.rpc.serializer.json.JsonRpcRequestCodec;
 import com.github.rpc.serializer.json.JsonRpcResponse;
 import com.github.rpc.serializer.json.JsonRpcResponseCodec;
@@ -30,7 +31,7 @@ public class ClientTest {
     @Test
     public void JsonTest() throws Exception {
 
-        JsonRpcResponse response = new JsonRpcResponse("0", 200, "success", 100);
+        JsonRpcResponse response = new JsonRpcResponse("0", 200, "success", 100, new Metadata());
 
         EmbeddedChannel channel = new EmbeddedChannel(
                 new JsonObjectDecoder(),

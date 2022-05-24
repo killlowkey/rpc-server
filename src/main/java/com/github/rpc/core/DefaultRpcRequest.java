@@ -18,6 +18,7 @@ public class DefaultRpcRequest implements RpcRequest {
     private String id;
     private String name;
     private Object[] params;
+    private Metadata metadata;
 
     @Override
     public String getId() {
@@ -33,4 +34,10 @@ public class DefaultRpcRequest implements RpcRequest {
     public Object[] getParams() {
         return this.params;
     }
+
+    @Override
+    public Metadata getMetadata() {
+        return this.metadata;
+    }
+
 }

@@ -207,9 +207,9 @@ public class RpcClientImpl implements RpcClient {
     }
 
     @Override
-    public Object invoke(String methodName, Object[] arguments, Type returnType, Map<String, String> extraHeaders) throws Throwable {
+    public Object invoke(String methodName, Object[] arguments, Type returnType, Metadata metadata) throws Throwable {
         String id = String.valueOf(idCounter.getAndIncrement());
-        RpcRequest rpcRequest = new DefaultRpcRequest(id, methodName, arguments);
+        RpcRequest rpcRequest = new DefaultRpcRequest(id, methodName, arguments, metadata);
 
         // 发送请求
         RpcResponse response = sendRequest(rpcRequest);
@@ -255,12 +255,12 @@ public class RpcClientImpl implements RpcClient {
 
     @Override
     public void invoke(String methodName, Object argument) throws Throwable {
-        invoke(methodName, new Object[]{argument}, null, new HashMap<>());
+        invoke(methodName, new Object[]{argument}, null, new Metadata());
     }
 
     @Override
     public Object invoke(String methodName, Object[] arguments, Type returnType) throws Throwable {
-        return invoke(methodName, arguments, returnType, new HashMap<>());
+        return invoke(methodName, arguments, returnType, new Metadata());
     }
 
     @SuppressWarnings("unchecked")
@@ -271,9 +271,9 @@ public class RpcClientImpl implements RpcClient {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T invoke(String methodName, Object[] arguments, Class<T> clazz, Map<String, String> extraHeaders)
+    public <T> T invoke(String methodName, Object[] arguments, Class<T> clazz, Metadata metadata)
             throws Throwable {
-        return (T) invoke(methodName, arguments, Type.class.cast(clazz), extraHeaders);
+        return (T) invoke(methodName, arguments, Type.class.cast(clazz), metadata);
     }
 
     @Override
@@ -288,7 +288,7 @@ public class RpcClientImpl implements RpcClient {
         }
 
         String id = String.valueOf(idCounter.getAndIncrement());
-        RpcRequest rpcRequest = new DefaultRpcRequest(id, "health", null);
+        RpcRequest rpcRequest = new DefaultRpcRequest(id, "health", null, new Metadata());
         try {
             sendRequest(rpcRequest);
             updateHealthCheckInfo();

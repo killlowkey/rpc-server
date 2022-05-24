@@ -2,6 +2,7 @@ package com.github.rpc.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rpc.core.DefaultRpcRequest;
+import com.github.rpc.core.Metadata;
 import com.github.rpc.core.RpcRequest;
 import com.github.rpc.utils.RpcUtil;
 import io.netty.buffer.Unpooled;
@@ -40,7 +41,7 @@ public class SerializeTest {
         Method say = this.getClass().getDeclaredMethod("say", int[].class);
         RpcUtil.registerMethod("say", say);
 
-        RpcRequest rpcRequest = new DefaultRpcRequest("test", "say", new Object[]{new int[]{1,2,3}});
+        RpcRequest rpcRequest = new DefaultRpcRequest("test", "say", new Object[]{new int[]{1,2,3}}, new Metadata());
 
         ObjectMapper mapper = new ObjectMapper();
         String content = mapper.writeValueAsString(rpcRequest);

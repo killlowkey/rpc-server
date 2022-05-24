@@ -20,6 +20,10 @@ public class DefaultRpcResponse implements RpcResponse {
     private int code;
     private String message;
     private Object result;
+
+    // 默认需要初始化，否则构建 PbRpcResponse 会失败
+    private Metadata metadata = new Metadata();
+
     public DefaultRpcResponse(String id) {
         this.id = id;
     }
@@ -55,6 +59,11 @@ public class DefaultRpcResponse implements RpcResponse {
     @Override
     public Object getResult() {
         return this.result;
+    }
+
+    @Override
+    public Metadata getMetadata() {
+        return this.metadata;
     }
 
 }

@@ -27,4 +27,9 @@ public interface RpcResponse {
      */
     Object getResult();
 
+    /**
+     * 元数据
+     */
+    Metadata getMetadata();
+
 }

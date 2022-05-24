@@ -2,6 +2,7 @@ package com.github.rpc.serializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rpc.core.DefaultRpcResponse;
+import com.github.rpc.core.Metadata;
 import com.github.rpc.core.RpcRequest;
 import com.github.rpc.serializer.json.JsonRpcRequest;
 import com.github.rpc.serializer.json.JsonRpcRequestCodec;
@@ -46,7 +47,7 @@ public class ChannelHandlerTest {
         );
 
         // ============= 测试入站数据 =============
-        JsonRpcRequest request = new JsonRpcRequest("1", "say", new Object[]{"ray", 10});
+        JsonRpcRequest request = new JsonRpcRequest("1", "say", new Object[]{"ray", 10}, new Metadata());
         byte[] data = mapper.writeValueAsBytes(request);
         ByteBuf byteBuf = Unpooled.copiedBuffer(data);
         channel.writeInbound(byteBuf);
@@ -60,11 +61,11 @@ public class ChannelHandlerTest {
 
 
         // =========== 测试出站数据 =============
-        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100);
+        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100, new Metadata());
         channel.writeOutbound(response);
         channel.finish();
 
-        JsonRpcResponse jsonRpcResponse = new JsonRpcResponse("1", 200, "success", 100);
+        JsonRpcResponse jsonRpcResponse = new JsonRpcResponse("1", 200, "success", 100, new Metadata());
         byte[] responseData = mapper.writeValueAsBytes(jsonRpcResponse);
 
         // 读取出站编码后数据
@@ -108,7 +109,7 @@ public class ChannelHandlerTest {
 
 
         // ============= 测试出站信息 =============
-        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100);
+        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100, new Metadata());
         channel.writeOutbound(response);
         channel.finish();
 
@@ -141,7 +142,7 @@ public class ChannelHandlerTest {
         EmbeddedChannel channel = new EmbeddedChannel(
                 new MessageConvertHandler(Serializer.JSON)
         );
-        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100);
+        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100, new Metadata());
         channel.writeOutbound(response);
         channel.finish();
 
@@ -158,7 +159,7 @@ public class ChannelHandlerTest {
         EmbeddedChannel channel = new EmbeddedChannel(
                 new MessageConvertHandler(Serializer.PROTOBUF)
         );
-        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100);
+        DefaultRpcResponse response = new DefaultRpcResponse("1", 200, "success", 100, new Metadata());
         channel.writeOutbound(response);
         channel.finish();
 

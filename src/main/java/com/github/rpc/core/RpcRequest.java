@@ -22,4 +22,9 @@ public interface RpcRequest {
      */
     Object[] getParams();
 
+    /**
+     * 元数据
+     */
+    Metadata getMetadata();
+
 }

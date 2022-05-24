@@ -33,7 +33,7 @@ public class RpcClientImplTest {
                 .bind(8989)
                 .registerComponent(RpcComponent02.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
-                .serializer(Serializer.PROTOBUF)
+                .serializer(Serializer.JSON)
                 .build();
 
         new Thread(rpcServer::start).start();
@@ -43,7 +43,7 @@ public class RpcClientImplTest {
     @Before
     public void startClient() throws Throwable {
         rpcClient = new RpcClientImpl(new InetSocketAddress("127.0.0.1", 8989));
-        rpcClient.setSerializer(Serializer.PROTOBUF);
+        rpcClient.setSerializer(Serializer.JSON);
         new Thread(() -> {
             try {
                 rpcClient.start();
@@ -57,7 +57,9 @@ public class RpcClientImplTest {
     // 期待调用异常
     @Test(expected = ClientInvocationException.class)
     public void requestTest() throws Throwable {
-        String helloResult = rpcClient.invoke("RpcComponent02/hello", null, String.class);
+        Metadata metadata = new Metadata();
+        metadata.put("key", 1000);
+        String helloResult = rpcClient.invoke("RpcComponent02/hello", null, String.class, metadata);
         assertEquals("hello world", helloResult);
 
         String[]  getArrayValueResult = rpcClient.invoke("RpcComponent02/getArrayValue",
