@@ -11,6 +11,9 @@ rpc-server 是一个基于 netty rpc 框架
   * **ASM：通过 ASM 生成字节码，避免了方法调用时反射开销**
   * Reflect
   * Method Handle
+* 支持多种序列化
+  * Json
+  * Protobuf
 * 客户端接口动态代理
 * 客户端阻塞/非阻塞调用
 * 通讯加密：SSL
