@@ -13,7 +13,7 @@ rpc-server 是一个基于 netty rpc 框架
   * Method Handle
 * 客户端接口动态代理
 * 客户端阻塞/非阻塞调用
-* 通讯加密：SSL
+* 通讯加密：SSL/TLS
 * 注解配置扫描
 * 负载均衡
   * 轮训
