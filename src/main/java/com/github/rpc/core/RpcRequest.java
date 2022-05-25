@@ -1,23 +1,30 @@
 package com.github.rpc.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * rpc 请求
+ * RPC 请求定义
  *
  * @author Ray
- * @date created in 2022/3/5 9:39
+ * @date created in 2022/5/23 20:01
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class RpcRequest {
-    private String id;
-    private String version;
-    private String name;
-    private Object[] params;
+public interface RpcRequest {
+    /**
+     * 请求 id
+     */
+    String getId();
+
+    /**
+     * 请求方法
+     */
+    String getName();
+
+    /**
+     * 请求参数
+     */
+    Object[] getParams();
+
+    /**
+     * 元数据
+     */
+    Metadata getMetadata();
+
 }

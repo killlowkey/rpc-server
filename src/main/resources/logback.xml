@@ -6,7 +6,8 @@
         </encoder>
     </appender>
 
-    <root level="debug">
+    <!-- debug、info -->
+    <root level="info">
         <appender-ref ref="console"/>
     </root>
 </configuration>

@@ -7,18 +7,13 @@ import io.netty.handler.ssl.SslHandler;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import java.io.File;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Objects;
 
 /**
  * @author Ray
  * @date created in 2022/3/7 8:56
  */
-public class ClientSslProcessor implements NettyClientProcessor {
+public class ClientSslProcessor implements NettyProcessor {
 
     private final File jksFile;
     private final String keyStorePass;

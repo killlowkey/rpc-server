@@ -7,19 +7,16 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rpc.RpcClient;
-import com.github.rpc.core.handle.RpcRequestCodec;
-import com.github.rpc.core.handle.RpcResponseCodec;
 import com.github.rpc.core.handle.RpcResponseHandler;
 import com.github.rpc.exceptions.ClientInvocationException;
+import com.github.rpc.serializer.Serializer;
+import com.github.rpc.serializer.SerializeProcessor;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.json.JsonObjectDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,23 +34,21 @@ import java.util.concurrent.locks.ReentrantLock;
  * @date created in 2022/3/6 9:55
  */
 public class RpcClientImpl implements RpcClient {
-
     private static final Logger logger = LoggerFactory.getLogger(RpcClientImpl.class);
-
-    private static final String DEFAULT_VERSION = "2.0";
     private static final int DEFAULT_HEALTH_CHECK_INTERVAL = 30;
-
     private final AtomicLong idCounter = new AtomicLong();
     private final ObjectMapper mapper = new ObjectMapper();
     private final EventLoopGroup group = new NioEventLoopGroup();
     private final ReentrantLock lock = new ReentrantLock();
-    private final List<NettyClientProcessor> processors = new ArrayList<>();
+    private final List<NettyProcessor> processors = new ArrayList<>();
     // 存放请求
     private final ArrayBlockingQueue<RpcRequest> sendingQueue = new ArrayBlockingQueue<>(128);
     // 存放响应
     private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(128);
     // 异步请求线程池
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(8);
+
+    private Serializer serializer;
 
     private Bootstrap bootstrap;
     private Channel channel;
@@ -124,7 +119,7 @@ public class RpcClientImpl implements RpcClient {
     }
 
     @Override
-    public void addProcessor(NettyClientProcessor processor) {
+    public void addProcessor(NettyProcessor processor) {
         this.processors.add(processor);
     }
 
@@ -144,38 +139,39 @@ public class RpcClientImpl implements RpcClient {
     }
 
     @Override
+    public void setSerializer(Serializer serializer) {
+        this.serializer = serializer;
+    }
+
+    @Override
     public void start() throws Exception {
 
-        this.processors.forEach(processor -> processor.process(bootstrap));
+        // 序列化
+        this.serializer = this.serializer == null ? Serializer.JSON : this.serializer;
+        this.processors.add(new SerializeProcessor(this.serializer, true));
 
-        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+        this.processors.forEach(processor -> processor.processBootstrap(bootstrap));
+
+        bootstrap.handler(new ChannelInitializer<Channel>() {
             @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
+            protected void initChannel(Channel ch) throws Exception {
                 processors.forEach(processor -> processor.processChannel(ch));
-
-                ch.pipeline()
-                        .addLast(new JsonObjectDecoder())
-                        // 请求和响应编解码器
-                        // note：先响应编码器，后请求编码器
-                        // 响应编码器的 decode 数据之后，请求编码器的 decode 就不会进行工作
-                        // 所以位置一定要正确，否则无法正确编码
-                        .addLast(new RpcResponseCodec())
-                        .addLast(new RpcRequestCodec())
-                        // 响应处理器
-                        .addLast(new RpcResponseHandler(responseReceivers));
+                ch.pipeline().addLast(new RpcResponseHandler(responseReceivers));
             }
         });
 
-        // 连接 channel
-        ChannelFuture channelFuture = bootstrap.connect().sync();
-        this.channel = channelFuture.channel();
+        // 连接 rpc server
+        this.channel = bootstrap.connect().addListener(future -> {
+            if (future.isSuccess()) {
+                this.isRunning = true;
+                logger.info("connect rpc server success");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("rpc client start success, remote server address {}",
+                            this.channel.remoteAddress());
+                }
+            }
+        }).sync().channel();
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("rpc client start success, remote server address {}",
-                    this.channel.remoteAddress());
-        }
-
-        this.isRunning = true;
         try {
             // 等待关闭 channel
             this.channel.closeFuture().sync();
@@ -211,9 +207,9 @@ public class RpcClientImpl implements RpcClient {
     }
 
     @Override
-    public Object invoke(String methodName, Object[] arguments, Type returnType, Map<String, String> extraHeaders) throws Throwable {
+    public Object invoke(String methodName, Object[] arguments, Type returnType, Metadata metadata) throws Throwable {
         String id = String.valueOf(idCounter.getAndIncrement());
-        RpcRequest rpcRequest = new RpcRequest(id, DEFAULT_VERSION, methodName, arguments);
+        RpcRequest rpcRequest = new DefaultRpcRequest(id, methodName, arguments, metadata);
 
         // 发送请求
         RpcResponse response = sendRequest(rpcRequest);
@@ -252,19 +248,19 @@ public class RpcClientImpl implements RpcClient {
     }
 
     private void resolveResponseError(RpcResponse rpcResponse) {
-        if (rpcResponse.getError() != null) {
-            throw new ClientInvocationException(rpcResponse.getError());
+        if (rpcResponse.getCode() != 200) {
+            throw new ClientInvocationException(rpcResponse.getCode(), rpcResponse.getMessage());
         }
     }
 
     @Override
     public void invoke(String methodName, Object argument) throws Throwable {
-        invoke(methodName, new Object[]{argument}, null, new HashMap<>());
+        invoke(methodName, new Object[]{argument}, null, new Metadata());
     }
 
     @Override
     public Object invoke(String methodName, Object[] arguments, Type returnType) throws Throwable {
-        return invoke(methodName, arguments, returnType, new HashMap<>());
+        return invoke(methodName, arguments, returnType, new Metadata());
     }
 
     @SuppressWarnings("unchecked")
@@ -275,9 +271,9 @@ public class RpcClientImpl implements RpcClient {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T invoke(String methodName, Object[] arguments, Class<T> clazz, Map<String, String> extraHeaders)
+    public <T> T invoke(String methodName, Object[] arguments, Class<T> clazz, Metadata metadata)
             throws Throwable {
-        return (T) invoke(methodName, arguments, Type.class.cast(clazz), extraHeaders);
+        return (T) invoke(methodName, arguments, Type.class.cast(clazz), metadata);
     }
 
     @Override
@@ -292,7 +288,7 @@ public class RpcClientImpl implements RpcClient {
         }
 
         String id = String.valueOf(idCounter.getAndIncrement());
-        RpcRequest rpcRequest = new RpcRequest(id, DEFAULT_VERSION, "health", null);
+        RpcRequest rpcRequest = new DefaultRpcRequest(id, "health", null, new Metadata());
         try {
             sendRequest(rpcRequest);
             updateHealthCheckInfo();

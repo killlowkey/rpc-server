@@ -11,7 +11,7 @@ import java.util.Date;
  * @date created in 2022/3/6 21:49
  */
 @Data
-public class MethodInvocationInfo {
+public class MethodInvokeInfo {
 
     private String name;
     private Object[] args;
@@ -20,7 +20,7 @@ public class MethodInvocationInfo {
     private Date start;
     private Date end;
 
-    public MethodInvocationInfo(String name, Object... args) {
+    public MethodInvokeInfo(String name, Object... args) {
         this.name = name;
         this.args = args;
         this.start = new Date();

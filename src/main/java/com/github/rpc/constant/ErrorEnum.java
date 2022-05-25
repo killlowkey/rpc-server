@@ -17,10 +17,10 @@ public enum ErrorEnum {
     ADAPT_METHOD_PARAM_ERROR(-32000, "adapt method param error"),
     TRIGGER_RATE_LIMIT(-32001, "trigger rate limit");
 
-    private final long code;
+    private final int code;
     private final String msg;
 
-    ErrorEnum(long code, String msg) {
+    ErrorEnum(int code, String msg) {
         this.code = code;
         this.msg = msg;
     }

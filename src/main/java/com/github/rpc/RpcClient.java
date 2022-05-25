@@ -1,8 +1,9 @@
 package com.github.rpc;
 
-import com.github.rpc.core.NettyClientProcessor;
+import com.github.rpc.core.NettyProcessor;
 import com.github.rpc.core.RpcRequest;
 import com.github.rpc.core.RpcResponse;
+import com.github.rpc.serializer.Serializer;
 
 import java.util.concurrent.Future;
 
@@ -16,7 +17,9 @@ public interface RpcClient extends InvokeOperation, SslOperation, HealthCheck {
 
     Future<RpcResponse> sendNoBlockRequest(RpcRequest rpcRequest) throws Exception;
 
-    void addProcessor(NettyClientProcessor processor);
+    void setSerializer(Serializer serializer);
+
+    void addProcessor(NettyProcessor processor);
 
     void start() throws Exception;
 

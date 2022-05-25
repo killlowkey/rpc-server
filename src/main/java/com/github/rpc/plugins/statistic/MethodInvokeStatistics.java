@@ -11,12 +11,12 @@ import java.util.Date;
  * @author Ray
  * @date created in 2022/3/6 21:43
  */
-public class MethodInvocationStatistics implements MethodInvokeListener {
+public class MethodInvokeStatistics implements MethodInvokeListener {
 
-    private final ThreadLocal<MethodInvocationInfo> threadLocal = new ThreadLocal<>();
+    private final ThreadLocal<MethodInvokeInfo> threadLocal = new ThreadLocal<>();
     private final Storage storage;
 
-    public MethodInvocationStatistics(Storage storage) {
+    public MethodInvokeStatistics(Storage storage) {
         if (storage == null) {
             throw new IllegalArgumentException("storage cannot be null");
         }
@@ -25,13 +25,13 @@ public class MethodInvocationStatistics implements MethodInvokeListener {
 
     @Override
     public void atBeforeInvoke(MethodContext context, Object... args) {
-        MethodInvocationInfo info = new MethodInvocationInfo(context.getName(), args);
+        MethodInvokeInfo info = new MethodInvokeInfo(context.getName(), args);
         this.threadLocal.set(info);
     }
 
     @Override
     public void atAfterInvoke(MethodContext context, Object result) {
-        MethodInvocationInfo info = this.threadLocal.get();
+        MethodInvokeInfo info = this.threadLocal.get();
         info.setResult(result);
         info.setEnd(new Date());
         try {
@@ -43,7 +43,7 @@ public class MethodInvocationStatistics implements MethodInvokeListener {
 
     @Override
     public void atInvokeException(MethodContext context, Throwable throwable) {
-        MethodInvocationInfo info = this.threadLocal.get();
+        MethodInvokeInfo info = this.threadLocal.get();
         info.setEx(throwable);
         info.setEnd(new Date());
         try {
