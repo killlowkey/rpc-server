@@ -14,7 +14,7 @@ public class ClientApplication {
     public static void main(String[] args) {
         InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8989);
         PersonService service = new RpcClientProxy(address)
-                .serializer(Serializer.PROTOBUF)
+                .serialize(Serializer.PROTOBUF)
                 .createProxy(PersonService.class);
 
         System.out.println(service.hello());

@@ -33,7 +33,7 @@ public class RpcClientImplTest {
                 .bind(8989)
                 .registerComponent(RpcComponent02.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
-                .serializer(Serializer.JSON)
+                .serialize(Serializer.JSON)
                 .build();
 
         new Thread(rpcServer::start).start();

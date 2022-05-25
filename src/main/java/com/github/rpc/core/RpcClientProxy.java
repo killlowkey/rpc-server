@@ -43,7 +43,7 @@ public class RpcClientProxy {
         return this;
     }
 
-    public RpcClientProxy serializer(Serializer serializer) {
+    public RpcClientProxy serialize(Serializer serializer) {
         this.rpcClient.setSerializer(serializer);
         return this;
     }

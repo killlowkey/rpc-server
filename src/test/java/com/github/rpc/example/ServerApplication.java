@@ -1,7 +1,6 @@
 package com.github.rpc.example;
 
 import com.github.rpc.RpcServer;
-import com.github.rpc.annotation.RpcComponent02;
 import com.github.rpc.core.PersonServiceImpl;
 import com.github.rpc.core.RpcServerBuilder;
 import com.github.rpc.invoke.InvokeType;
@@ -19,7 +18,7 @@ public class ServerApplication {
                 .bind(8989)
                 .registerComponent(PersonServiceImpl.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
-                .serializer(Serializer.PROTOBUF)
+                .serialize(Serializer.PROTOBUF)
                 .build();
         rpcServer.start();
     }

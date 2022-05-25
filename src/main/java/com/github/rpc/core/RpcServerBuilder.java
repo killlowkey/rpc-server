@@ -9,7 +9,7 @@ import com.github.rpc.invoke.MethodInvokeDispatcherBuilder;
 import com.github.rpc.invoke.MethodInvokeListener;
 import com.github.rpc.plugins.health.HealthRequestInterceptor;
 import com.github.rpc.plugins.limit.RateLimitInterceptor;
-import com.github.rpc.plugins.statistic.MethodInvocationStatistics;
+import com.github.rpc.plugins.statistic.MethodInvokeStatistics;
 import com.github.rpc.plugins.statistic.Storage;
 import com.github.rpc.serializer.Serializer;
 import io.netty.channel.ChannelOption;
@@ -96,7 +96,7 @@ public class RpcServerBuilder {
     }
 
     public RpcServerBuilder enableInvocationStatistics(Storage storage) {
-        MethodInvocationStatistics statistics = new MethodInvocationStatistics(storage);
+        MethodInvokeStatistics statistics = new MethodInvokeStatistics(storage);
         this.addMethodInvokeListener(statistics);
         return this;
     }
@@ -106,8 +106,8 @@ public class RpcServerBuilder {
         return this;
     }
 
-    public RpcServerBuilder serializer(Serializer serializer) {
-        this.rpcServer.serializer(serializer);
+    public RpcServerBuilder serialize(Serializer serializer) {
+        this.rpcServer.serialize(serializer);
         return this;
     }
 

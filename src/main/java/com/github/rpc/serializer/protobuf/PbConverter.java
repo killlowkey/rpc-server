@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 构建 Pb 请求/响应不允许有空值，可能导致无法构建
+ * 构建 Pb 请求/响应 字段不允许有空值，会导致无法构建
+ * 从而 Netty 出/入站没有数据
  *
  * https://stackoverflow.com/questions/29170183/how-to-set-repeated-fields-in-protobuf-before-building-the-message
  *

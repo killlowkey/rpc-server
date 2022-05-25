@@ -10,7 +10,7 @@ import com.github.rpc.RpcClient;
 import com.github.rpc.core.handle.RpcResponseHandler;
 import com.github.rpc.exceptions.ClientInvocationException;
 import com.github.rpc.serializer.Serializer;
-import com.github.rpc.serializer.SerializerProcessor;
+import com.github.rpc.serializer.SerializeProcessor;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -148,7 +148,7 @@ public class RpcClientImpl implements RpcClient {
 
         // 序列化
         this.serializer = this.serializer == null ? Serializer.JSON : this.serializer;
-        this.processors.add(new SerializerProcessor(this.serializer, true));
+        this.processors.add(new SerializeProcessor(this.serializer, true));
 
         this.processors.forEach(processor -> processor.processBootstrap(bootstrap));
 

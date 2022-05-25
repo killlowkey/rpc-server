@@ -4,7 +4,7 @@ import com.github.rpc.RpcServer;
 import com.github.rpc.core.handle.RpcRequestHandler;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.serializer.Serializer;
-import com.github.rpc.serializer.SerializerProcessor;
+import com.github.rpc.serializer.SerializeProcessor;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -86,7 +86,7 @@ public class RpcServerImpl implements RpcServer {
 
         // 序列化
         this.serializer = this.serializer == null ? Serializer.JSON : this.serializer;
-        this.processors.add(new SerializerProcessor(serializer, false));
+        this.processors.add(new SerializeProcessor(serializer, false));
 
         this.processors.forEach(processor -> processor.processServerBootstrap(bootstrap));
 
@@ -153,7 +153,7 @@ public class RpcServerImpl implements RpcServer {
         this.addProcessor(new ServerSslProcessor(jksFile, password, needClientAuth));
     }
 
-    public void serializer(Serializer serializer) {
+    public void serialize(Serializer serializer) {
         this.serializer = serializer;
     }
 

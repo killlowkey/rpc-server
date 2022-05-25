@@ -9,5 +9,5 @@ package com.github.rpc.plugins.statistic;
  * @date created in 2022/3/6 21:55
  */
 public interface Storage {
-    void save(MethodInvocationInfo info);
+    void save(MethodInvokeInfo info);
 }

@@ -1,7 +1,7 @@
 # rpc-server
 > 配套文章：[RPC 框架设计复盘](https://killlowkey.github.io/2022/03/15/%E5%A6%82%E4%BD%95%E8%AE%BE%E8%AE%A1-RPC-%E6%A1%86%E6%9E%B6/#more)
 
-rpc-server 是一个基于 netty rpc 框架
+rpc-server 是一个基于 Netty 的 RPC 框架
 
 
 
@@ -14,14 +14,17 @@ rpc-server 是一个基于 netty rpc 框架
 * 支持多种序列化
   * Json
   * Protobuf
-* 客户端接口动态代理
-* 客户端阻塞/非阻塞调用
-* 通讯加密：SSL
-* 注解配置扫描
+* 插件式组件
+  * 健康检查
+  * 接口限流
+  * 方法调用统计
 * 负载均衡
   * 轮训
   * 随机
-* 接口限流
+* 客户端接口动态代理
+* 客户端阻塞/非阻塞调用
+* 加密传输：SSL/TLS
+* 注解配置扫描
 * 服务别名：一个服务采用多个名称
 
 
@@ -67,6 +70,8 @@ rpc-server 是一个基于 netty rpc 框架
        .invokeType(InvokeType.ASM)
        // 注册服务，还提供扫描包方式注册服务
        .registerComponent(PersonServiceImpl.class)
+       // 使用 Protobuf 序列化
+       .serialize(Serializer.PROTOBUF)
        .bind(8989)
        .build();
    
@@ -78,9 +83,11 @@ rpc-server 是一个基于 netty rpc 框架
 
    ```java
    InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8989);
-   RpcClientProxy rpcClientProxy = new RpcClientProxy(address);
-   // 对 PersonService 接口动态代理
-   PersonService personService = rpcClientProxy.createProxy(PersonService.class);
+   PersonService personService = new RpcClientProxy(address)
+            // 使用 Protobuf 序列化
+            .serialize(Serializer.PROTOBUF)
+            // 创建 PersonService 代理
+            .createProxy(PersonService.class);
    
    // 方法调用
    assertEquals("hello world", personService.hello());
