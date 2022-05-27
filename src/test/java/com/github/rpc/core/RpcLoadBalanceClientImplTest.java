@@ -52,7 +52,9 @@ public class RpcLoadBalanceClientImplTest {
     public void loadBalanceTest() {
         InetSocketAddress address1 = new InetSocketAddress("127.0.0.1", 8888);
         InetSocketAddress address2 = new InetSocketAddress("127.0.0.1", 9999);
-        PersonService clientComponent = new RpcClientProxy(Arrays.asList(address1, address2), LoadBalanceStrategy.ROTATION)
+        PersonService clientComponent = new RpcClientProxy()
+                .rpcServerAddress(Arrays.asList(address1, address2))
+                .loadBalance(LoadBalanceStrategy.ROTATION)
                 .createProxy(PersonService.class);
 
         assertEquals("hello world", clientComponent.hello());

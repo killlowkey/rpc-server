@@ -1,8 +1,10 @@
 package com.github.rpc.loadbalance;
 
 import com.github.rpc.RpcClient;
+import com.github.rpc.registry.ServiceDiscovery;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -15,14 +17,16 @@ public class RotationLoadBalance extends AbstractLoadBalance {
 
     private final AtomicInteger counter = new AtomicInteger();
 
-    public RotationLoadBalance(List<RpcClient> rpcClients) {
-        super(rpcClients);
+    public RotationLoadBalance(ServiceDiscovery discovery,
+                               Map<String, RpcClient> globalClients,
+                               Map<String, List<RpcClient>> serviceClients) {
+        super(discovery, globalClients, serviceClients);
     }
 
     @Override
-    public RpcClient doSelect() {
-        int index = counter.getAndIncrement() % rpcClients.size();
-        return this.rpcClients.get(index);
+    public RpcClient doSelect(List<RpcClient> clients) {
+        int index = counter.getAndIncrement() % clients.size();
+        return clients.get(index);
     }
 
 }

@@ -49,7 +49,8 @@ public class MethodHandleMethodInvokeDispatcher extends AbstractMethodInvokeDisp
                 e.printStackTrace();
             }
 
-            this.handleMap.put(methodName, methodHandle);
+            // name：com.github.PersonService#say
+            this.handleMap.put(name, methodHandle);
         });
     }
 
