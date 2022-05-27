@@ -3,6 +3,7 @@ package com.github.rpc.core;
 import com.github.rpc.RpcServer;
 import com.github.rpc.core.handle.RpcRequestHandler;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
+import com.github.rpc.registry.Registry;
 import com.github.rpc.serializer.Serializer;
 import com.github.rpc.serializer.SerializeProcessor;
 import io.netty.bootstrap.ServerBootstrap;
@@ -35,6 +36,7 @@ public class RpcServerImpl implements RpcServer {
     private ServerBootstrap bootstrap;
     private MethodInvokeDispatcher dispatcher;
     private InetSocketAddress address;
+    private Registry registry;
     private boolean runnable;
 
     public RpcServerImpl(MethodInvokeDispatcher dispatcher, InetSocketAddress address) {
@@ -65,12 +67,21 @@ public class RpcServerImpl implements RpcServer {
         this.address = address;
     }
 
+    public InetSocketAddress getAddress() {
+        return this.address;
+    }
+
     public void setDispatcher(MethodInvokeDispatcher dispatcher) {
         this.dispatcher = dispatcher;
     }
 
     public void addProcessor(NettyProcessor processor) {
         this.processors.add(processor);
+    }
+
+    @Override
+    public void setRegistry(Registry registry) {
+        this.registry = registry;
     }
 
     @Override
@@ -95,7 +106,7 @@ public class RpcServerImpl implements RpcServer {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
                         processors.forEach(processor -> processor.processChannel(ch));
-                        ch.pipeline().addLast(new RpcRequestHandler(dispatcher));
+                        ch.pipeline().addLast(new RpcRequestHandler(dispatcher, registry));
                     }
                 });
 

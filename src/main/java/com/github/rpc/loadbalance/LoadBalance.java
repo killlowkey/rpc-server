@@ -10,6 +10,6 @@ import com.github.rpc.RpcClient;
  */
 public interface LoadBalance {
 
-    RpcClient select();
+    RpcClient select(String serviceName);
 
 }

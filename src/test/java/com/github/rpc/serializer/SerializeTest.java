@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rpc.core.DefaultRpcRequest;
 import com.github.rpc.core.Metadata;
 import com.github.rpc.core.RpcRequest;
-import com.github.rpc.utils.RpcUtil;
-import io.netty.buffer.Unpooled;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.junit.Test;
@@ -13,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
@@ -39,7 +36,7 @@ public class SerializeTest {
     public void rpcRequestTest() throws Exception {
 
         Method say = this.getClass().getDeclaredMethod("say", int[].class);
-        RpcUtil.registerMethod("say", say);
+//        RpcUtil.registerMethod("say", say);
 
         RpcRequest rpcRequest = new DefaultRpcRequest("test", "say", new Object[]{new int[]{1,2,3}}, new Metadata());
 

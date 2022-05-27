@@ -5,6 +5,7 @@ import com.github.rpc.core.RpcRequest;
 import com.github.rpc.core.RpcResponse;
 import com.github.rpc.serializer.Serializer;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.Future;
 
 /**
@@ -26,4 +27,8 @@ public interface RpcClient extends InvokeOperation, SslOperation, HealthCheck {
     void close();
 
     boolean isRunnable();
+
+    boolean isConnecting();
+
+    InetSocketAddress getRemoteAddress();
 }

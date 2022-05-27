@@ -4,7 +4,8 @@ import com.github.rpc.core.RpcServiceConfiguration;
 import com.github.rpc.invoke.asm.AsmGenerator;
 import com.github.rpc.invoke.mh.MethodHandleMethodInvokeDispatcher;
 import com.github.rpc.invoke.reflect.ReflectMethodInvokeDispatcher;
-import com.github.rpc.utils.RpcUtil;
+import com.github.rpc.registry.Entry;
+import com.github.rpc.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,11 +65,20 @@ public class MethodInvokeDispatcherBuilder {
     public MethodInvokeDispatcher build() {
 
         Map<String, MethodContext> rpcComponents = this.configuration.getRpcComponents();
+        Registry registry = this.configuration.getRegistry();
+        // 服务注册
         rpcComponents.forEach((name, context) -> {
-            RpcUtil.registerMethod(name, context.getMethod());
-            if (logger.isDebugEnabled()) {
-                logger.debug("register [{}] rpc to server", name);
+            String[] names = name.split("#");
+            if (names.length != 2) {
+                return;
             }
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Register [{}] RPC", name);
+            }
+
+            Entry entry = new Entry(names[0], names[1], context.getMethod(), configuration.getAddress());
+            registry.register(entry);
         });
 
         switch (this.type) {

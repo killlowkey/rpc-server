@@ -118,7 +118,7 @@ public class AsmGenerator {
         try {
             return this.classLoader.loadClass(className);
         } catch (ClassNotFoundException e) {
-            logger.error("load %s class failed", className);
+            logger.error("load {} class failed", className);
             e.printStackTrace();
         }
 

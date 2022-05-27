@@ -36,6 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class RpcClientImpl implements RpcClient {
     private static final Logger logger = LoggerFactory.getLogger(RpcClientImpl.class);
     private static final int DEFAULT_HEALTH_CHECK_INTERVAL = 30;
+    private static final int START_TIMEOUT = 5000;
     private final AtomicLong idCounter = new AtomicLong();
     private final ObjectMapper mapper = new ObjectMapper();
     private final EventLoopGroup group = new NioEventLoopGroup();
@@ -55,6 +56,8 @@ public class RpcClientImpl implements RpcClient {
     private boolean isRunning;
     private Date lastHealthCheckDate;
     private int healthCheckFailureCount;
+    private InetSocketAddress address;
+    private boolean connecting;
 
     public RpcClientImpl(InetSocketAddress address) {
         this.initBootStrap(address);
@@ -66,6 +69,7 @@ public class RpcClientImpl implements RpcClient {
     }
 
     private void initBootStrap(InetSocketAddress address) {
+        this.address = address;
         bootstrap = new Bootstrap()
                 .group(this.group)
                 .remoteAddress(address)
@@ -80,8 +84,12 @@ public class RpcClientImpl implements RpcClient {
 
     @Override
     public RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception {
-        if (!this.isRunning) {
+        if (!this.isRunning && !this.connecting) {
             throw new IllegalStateException("send request failed, rpc client disconnected");
+        }
+
+        if (this.connecting) {
+            waitStart();
         }
 
         // 发送请求
@@ -160,6 +168,7 @@ public class RpcClientImpl implements RpcClient {
             }
         });
 
+        this.connecting = true;
         // 连接 rpc server
         this.channel = bootstrap.connect().addListener(future -> {
             if (future.isSuccess()) {
@@ -170,6 +179,7 @@ public class RpcClientImpl implements RpcClient {
                             this.channel.remoteAddress());
                 }
             }
+            this.connecting = false;
         }).sync().channel();
 
         try {
@@ -203,7 +213,17 @@ public class RpcClientImpl implements RpcClient {
 
     @Override
     public boolean isRunnable() {
-        return !this.isRunning;
+        return this.isRunning;
+    }
+
+    @Override
+    public boolean isConnecting() {
+        return this.connecting;
+    }
+
+    @Override
+    public InetSocketAddress getRemoteAddress() {
+        return this.address;
     }
 
     @Override
@@ -304,6 +324,20 @@ public class RpcClientImpl implements RpcClient {
     private void updateHealthCheckInfo() {
         this.lastHealthCheckDate = new Date();
         this.healthCheckFailureCount = 0;
+    }
+
+    private void waitStart() {
+        try {
+            long start = System.currentTimeMillis();
+            while (!isRunning) {
+                if (System.currentTimeMillis() - start > START_TIMEOUT) {
+                    throw new IllegalStateException("client start timeout");
+                }
+                Thread.sleep(10L);
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

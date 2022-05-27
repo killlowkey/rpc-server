@@ -23,6 +23,8 @@
         <protoc-gen-grpc-java.plugin.version>1.42.1</protoc-gen-grpc-java.plugin.version>
         <protobuf.version>3.20.1</protobuf.version>
         <os-maven-plugin.version>1.6.2</os-maven-plugin.version>
+        <curator.version>5.2.1</curator.version>
+        <hutool.version>5.8.0</hutool.version>
     </properties>
 
     <dependencies>
@@ -79,6 +81,18 @@
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+            <version>${hutool.version}</version>
         </dependency>
 
     </dependencies>

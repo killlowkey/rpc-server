@@ -1,5 +1,6 @@
 package com.github.rpc.core;
 
+import cn.hutool.core.net.NetUtil;
 import com.github.rpc.RpcServer;
 import com.github.rpc.annotation.AnnotationScanner;
 import com.github.rpc.annotation.RateLimitEntry;
@@ -11,6 +12,11 @@ import com.github.rpc.plugins.health.HealthRequestInterceptor;
 import com.github.rpc.plugins.limit.RateLimitInterceptor;
 import com.github.rpc.plugins.statistic.MethodInvokeStatistics;
 import com.github.rpc.plugins.statistic.Storage;
+import com.github.rpc.registry.RegisterMode;
+import com.github.rpc.registry.Registry;
+import com.github.rpc.registry.RegistryConfig;
+import com.github.rpc.registry.RegistryFactory;
+import com.github.rpc.registry.zookeeper.ZookeeperRegistry;
 import com.github.rpc.serializer.Serializer;
 import io.netty.channel.ChannelOption;
 import io.netty.util.internal.StringUtil;
@@ -33,6 +39,8 @@ public class RpcServerBuilder {
     private final List<Class<?>> components = new ArrayList<>();
     private final RpcServerImpl rpcServer = new RpcServerImpl();
     private final List<MethodInvokeListener> listeners = new ArrayList<>();
+    private RegisterMode registerMode;
+    private final RegistryConfig config = new RegistryConfig();
 
     public RpcServerBuilder scanPackage(String packageName) {
         if (StringUtil.isNullOrEmpty(packageName)) {
@@ -111,6 +119,12 @@ public class RpcServerBuilder {
         return this;
     }
 
+    public RpcServerBuilder zookeeper(String zookeeperAddress) {
+        this.registerMode = RegisterMode.ZOOKEEPER;
+        this.config.put(ZookeeperRegistry.ZOOKEEPER_KEY, zookeeperAddress);
+        return this;
+    }
+
     public RpcServer build() {
 
         if (StringUtil.isNullOrEmpty(packageName) && components.size() == 0) {
@@ -122,6 +136,17 @@ public class RpcServerBuilder {
         AnnotationScanner scanner = new AnnotationScanner(this.packageName, configuration);
         scanner.registerScanClass(this.components.toArray(new Class[]{}));
         scanner.scan();
+
+        // 注册中心
+        registerMode = registerMode == null ? RegisterMode.MEMORY : registerMode;
+        Registry registry = RegistryFactory.getRegistry(registerMode, config);
+        configuration.setRegistry(registry);
+        rpcServer.setRegistry(registry);
+
+        // 通信地址
+        int port = this.rpcServer.getAddress().getPort();
+        InetSocketAddress address = new InetSocketAddress(NetUtil.getLocalhost(), port);
+        configuration.setAddress(address);
 
         MethodInvokeDispatcherBuilder dispatcherBuilder = new MethodInvokeDispatcherBuilder(configuration);
         // 保存asm生成字节码

@@ -1,4 +1,4 @@
-package com.github.rpc.core;
+package com.github.rpc.example.rpc;
 
 import com.github.rpc.annotation.RpcService;
 

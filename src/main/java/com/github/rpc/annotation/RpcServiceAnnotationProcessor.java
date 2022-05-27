@@ -11,6 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Ray
@@ -42,8 +43,28 @@ public class RpcServiceAnnotationProcessor implements AnnotationProcessor {
             if (MethodUtil.filterMethod(method)) {
                 return;
             }
-            registerRpc(rpcService.value(), obj, method);
+
+            String nmae = rpcService.value();
+            // 为空则，采用方法所在的接口名
+            nmae = Objects.equals(nmae, "") ? getInterfaceName(method) : nmae;
+            // 注册 RPC 组件
+            registerRpc(nmae, obj, method);
         });
+    }
+
+    private String getInterfaceName(Method method) {
+        Class<?> aClass = method.getDeclaringClass();
+        for (Class<?> anInterface : aClass.getInterfaces()) {
+            for (Method m : anInterface.getDeclaredMethods()) {
+                if (method.getName().equals(m.getName())
+                        && method.getReturnType().equals(m.getReturnType())
+                        && Arrays.equals(method.getParameterTypes(), m.getParameterTypes())) {
+                    return anInterface.getName();
+                }
+            }
+        }
+
+        return "";
     }
 
     private Object newInstance(Class<?> clazz) {
@@ -63,7 +84,8 @@ public class RpcServiceAnnotationProcessor implements AnnotationProcessor {
 
     private void registerRpc(String parentName, Object obj, Method method) {
         Map<String, MethodContext> rpcComponents = configuration.getRpcComponents();
-        String name = parentName + method.getName();
+        // com.github.PersonService#say
+        String name = parentName + "#" + method.getName();
         if (rpcComponents.containsKey(name)) {
             return;
         }

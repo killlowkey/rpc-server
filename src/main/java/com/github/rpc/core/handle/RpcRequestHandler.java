@@ -7,12 +7,15 @@ import com.github.rpc.core.RpcRequest;
 import com.github.rpc.exceptions.MethodNotFoundException;
 import com.github.rpc.exceptions.RpcServerException;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
-import com.github.rpc.utils.RpcUtil;
+import com.github.rpc.registry.Entry;
+import com.github.rpc.registry.Registry;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Method;
 
 /**
  * @author Ray
@@ -21,11 +24,14 @@ import org.slf4j.LoggerFactory;
 public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
     private static final Logger logger = LoggerFactory.getLogger(RpcRequestHandler.class);
     private final MethodInvokeDispatcher dispatcher;
+    private final Registry registry;
     private final JsonParamAdapter jsonParamAdapter = new JsonParamAdapter();
     private RpcRequest currentRequest;
 
-    public RpcRequestHandler(MethodInvokeDispatcher dispatcher) {
+    public RpcRequestHandler(MethodInvokeDispatcher dispatcher,
+                             Registry registry) {
         this.dispatcher = dispatcher;
+        this.registry = registry;
     }
 
     @Override
@@ -37,9 +43,9 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
             logger.debug("handle [{}] request, id={}", rpcRequest.getName(), rpcRequest.getId());
         }
 
-        String name = rpcRequest.getName();
+        Method method = findMethod(rpcRequest.getName());
         // rpc 服务没有该方法
-        if (StringUtil.isNullOrEmpty(name) || RpcUtil.getMethod(name) == null) {
+        if (method == null) {
             DefaultRpcResponse response = new DefaultRpcResponse(currentRequest.getId());
             response.setError(ErrorEnum.METHOD_NOT_FOUND);
             ctx.writeAndFlush(response);
@@ -49,9 +55,9 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
         try {
             // 适配方法参数
-            Object[] params = jsonParamAdapter.adapt(RpcUtil.getMethod(name), rpcRequest.getParams());
-            // 调用方法
-            DefaultRpcResponse response = invoke(name, params, rpcRequest.getId());
+            Object[] params = jsonParamAdapter.adapt(method, rpcRequest.getParams());
+            // 调用方法：com.github.PersonService#say
+            DefaultRpcResponse response = invoke(rpcRequest.getName(), params, rpcRequest.getId());
             // 成功
             response.success();
             ctx.writeAndFlush(response);
@@ -93,5 +99,19 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         } finally {
             currentRequest = null;
         }
+    }
+
+    private Method findMethod(String name) {
+        if (StringUtil.isNullOrEmpty(name)) {
+            return null;
+        }
+
+        String[] names = name.split("#");
+        if (names.length != 2) {
+            return null;
+        }
+
+        Entry entry = registry.lookupEntry(names[0], names[1]);
+        return entry == null ? null : entry.getMethod();
     }
 }
