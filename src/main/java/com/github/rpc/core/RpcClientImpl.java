@@ -2,10 +2,14 @@ package com.github.rpc.core;
 
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.thread.NamedThreadFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.rpc.DefaultInvokeFuture;
+import com.github.rpc.InvokeCallback;
+import com.github.rpc.InvokeFuture;
 import com.github.rpc.RpcClient;
 import com.github.rpc.core.handle.RpcResponseHandler;
 import com.github.rpc.exceptions.ClientInvocationException;
@@ -17,6 +21,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,19 +42,15 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class RpcClientImpl implements RpcClient {
     private static final Logger logger = LoggerFactory.getLogger(RpcClientImpl.class);
+    public static final int DEFAULT_TIMEOUT = 3000;
     private static final int DEFAULT_HEALTH_CHECK_INTERVAL = 30;
     private static final int START_TIMEOUT = 5000;
     private final AtomicLong idCounter = new AtomicLong();
     private final ObjectMapper mapper = new ObjectMapper();
+    private final Timer timer = new HashedWheelTimer(new NamedThreadFactory("DefaultTimer10", true), 10,
+            TimeUnit.MILLISECONDS);
     private final EventLoopGroup group = new NioEventLoopGroup();
-    private final ReentrantLock lock = new ReentrantLock();
     private final List<NettyProcessor> processors = new ArrayList<>();
-    // 存放请求
-    private final ArrayBlockingQueue<RpcRequest> sendingQueue = new ArrayBlockingQueue<>(128);
-    // 存放响应
-    private final ArrayBlockingQueue<RpcResponse> responseReceivers = new ArrayBlockingQueue<>(128);
-    // 异步请求线程池
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(8);
 
     private Serializer serializer;
 
@@ -84,6 +87,77 @@ public class RpcClientImpl implements RpcClient {
 
     @Override
     public RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception {
+        ensureOpen();
+
+        InvokeFuture invokeFuture = sendRequestWithFuture(rpcRequest);
+        // 等待响应
+        RpcResponse rpcResponse = invokeFuture.waitResponse(DEFAULT_TIMEOUT);
+        if (rpcResponse != null) {
+            // 更新健康检查信息
+            updateHealthCheckInfo();
+        } else {
+            rpcResponse = new DefaultRpcResponse(rpcRequest.getId(), 400,
+                    "wait RpcResponse Timeout", null, null);
+        }
+
+        return rpcResponse;
+    }
+
+    @Override
+    public InvokeFuture sendRequestWithCallback(RpcRequest rpcRequest,
+                                                InvokeCallback callback) throws Exception {
+        return sendRequestWithFuture(rpcRequest, DEFAULT_TIMEOUT, callback);
+    }
+
+    @Override
+    public InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest) throws Exception {
+        return sendRequestWithFuture(rpcRequest, DEFAULT_TIMEOUT, null);
+    }
+
+    @Override
+    public InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest, long timeoutMillis) throws Exception {
+        return sendRequestWithFuture(rpcRequest, timeoutMillis, null);
+    }
+
+    public InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest,
+                                              long timeoutMillis,
+                                              InvokeCallback callback) throws Exception {
+        DefaultInvokeFuture invokeFuture = new DefaultInvokeFuture(rpcRequest, callback);
+        Map<Integer, InvokeFuture> invokeFutureMap = channel.attr(RpcResponseHandler.FUTURE).get();
+        invokeFutureMap.put(invokeFuture.invokeId(), invokeFuture);
+
+        int requestId = Integer.parseInt(rpcRequest.getId());
+
+        if (timeoutMillis < DEFAULT_TIMEOUT) {
+            timeoutMillis = DEFAULT_TIMEOUT;
+        }
+        Timeout timeout = timer.newTimeout(timeout1 -> {
+            InvokeFuture future = invokeFutureMap.remove(requestId);
+            if (future != null) {
+                DefaultRpcResponse response = new DefaultRpcResponse(rpcRequest.getId());
+                response.setCode(400);
+                response.setMessage("wait RpcResponse timeout");
+                future.setResponse(response);
+                future.cancelTimeout();
+            }
+        }, timeoutMillis, TimeUnit.MILLISECONDS);
+        invokeFuture.addTimeout(timeout);
+
+        channel.writeAndFlush(rpcRequest).addListener(cf -> {
+            if (!cf.isSuccess()) {
+                InvokeFuture future = invokeFutureMap.remove(requestId);
+                if (future != null) {
+                    future.cancelTimeout();
+                    future.setCause(cf.cause());
+                    future.executeInvokeCallback();
+                }
+            }
+        });
+
+        return invokeFuture;
+    }
+
+    private void ensureOpen() {
         if (!this.isRunning && !this.connecting) {
             throw new IllegalStateException("send request failed, rpc client disconnected");
         }
@@ -91,39 +165,6 @@ public class RpcClientImpl implements RpcClient {
         if (this.connecting) {
             waitStart();
         }
-
-        // 发送请求
-        this.doSendRequest(rpcRequest);
-        // 获取响应，阻塞操作
-        RpcResponse rpcResponse = this.responseReceivers.take();
-        // 更新健康检查信息
-        updateHealthCheckInfo();
-        sendNextRequest();
-        return rpcResponse;
-    }
-
-    private void doSendRequest(RpcRequest rpcRequest) {
-        try {
-            lock.lock();
-            // 没有响应直接发送请求
-            if (this.responseReceivers.isEmpty()) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("send request#{} to rpc server", rpcRequest.getId());
-                }
-                this.channel.writeAndFlush(rpcRequest);
-            } else {
-                // 等待响应情况，请求需要放入到请求队列
-                this.sendingQueue.offer(rpcRequest);
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    @Override
-    public Future<RpcResponse> sendNoBlockRequest(RpcRequest rpcRequest) throws Exception {
-        Callable<RpcResponse> task = () -> sendRequest(rpcRequest);
-        return executorService.submit(task);
     }
 
     @Override
@@ -134,16 +175,6 @@ public class RpcClientImpl implements RpcClient {
     @Override
     public void enableSsl(File jksFile, String password, boolean needClientAuth) {
         this.processors.add(new ClientSslProcessor(jksFile, password));
-    }
-
-    private void sendNextRequest() {
-        if (!sendingQueue.isEmpty()) {
-            RpcRequest rpcRequest = this.sendingQueue.poll();
-            if (logger.isDebugEnabled()) {
-                logger.debug("send request#{} to rpc server", rpcRequest.getId());
-            }
-            this.channel.writeAndFlush(rpcRequest);
-        }
     }
 
     @Override
@@ -164,7 +195,7 @@ public class RpcClientImpl implements RpcClient {
             @Override
             protected void initChannel(Channel ch) throws Exception {
                 processors.forEach(processor -> processor.processChannel(ch));
-                ch.pipeline().addLast(new RpcResponseHandler(responseReceivers));
+                ch.pipeline().addLast(new RpcResponseHandler());
             }
         });
 
@@ -203,7 +234,6 @@ public class RpcClientImpl implements RpcClient {
                 this.channel.close().sync();
                 // 释放连接池资源
                 this.group.shutdownGracefully().sync();
-                this.executorService.shutdown();
             } catch (InterruptedException e) {
                 logger.error("stop rpc client failed, ex: {}", e.getMessage());
                 e.printStackTrace();

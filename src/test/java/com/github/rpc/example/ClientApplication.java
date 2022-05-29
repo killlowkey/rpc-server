@@ -6,6 +6,8 @@ import com.github.rpc.example.rpc.PersonService;
 import com.github.rpc.loadbalance.LoadBalanceStrategy;
 import com.github.rpc.serializer.Serializer;
 
+import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 
 /**
@@ -16,11 +18,11 @@ public class ClientApplication {
     public static void main(String[] args) throws InterruptedException {
 //        InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8989);
 
-        String zookeeper = args[0];
+//        String zookeeper = args[0];
 
         RpcClientProxy clientProxy = new RpcClientProxy()
-                .zookeeper(zookeeper)
-//                .rpcServerAddress(Arrays.asList(new InetSocketAddress("127.0.0.1", 8989)))
+//                .zookeeper(zookeeper)
+                .rpcServerAddress(Arrays.asList(new InetSocketAddress("127.0.0.1", 9090)))
                 .loadBalance(LoadBalanceStrategy.ROTATION)
                 .serialize(Serializer.PROTOBUF);
 
