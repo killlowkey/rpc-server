@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class RpcClientImpl implements RpcClient {
     private static final Logger logger = LoggerFactory.getLogger(RpcClientImpl.class);
+    public static final int DEFAULT_TIMEOUT = 3000;
     private static final int DEFAULT_HEALTH_CHECK_INTERVAL = 30;
     private static final int START_TIMEOUT = 5000;
     private final AtomicLong idCounter = new AtomicLong();
@@ -49,7 +50,6 @@ public class RpcClientImpl implements RpcClient {
     private final Timer timer = new HashedWheelTimer(new NamedThreadFactory("DefaultTimer10", true), 10,
             TimeUnit.MILLISECONDS);
     private final EventLoopGroup group = new NioEventLoopGroup();
-    private final ReentrantLock lock = new ReentrantLock();
     private final List<NettyProcessor> processors = new ArrayList<>();
 
     private Serializer serializer;
@@ -91,10 +91,14 @@ public class RpcClientImpl implements RpcClient {
 
         InvokeFuture invokeFuture = sendRequestWithFuture(rpcRequest);
         // 等待响应
-        RpcResponse rpcResponse = invokeFuture.waitResponse();
-
-        // 更新健康检查信息
-        updateHealthCheckInfo();
+        RpcResponse rpcResponse = invokeFuture.waitResponse(DEFAULT_TIMEOUT);
+        if (rpcResponse != null) {
+            // 更新健康检查信息
+            updateHealthCheckInfo();
+        } else {
+            rpcResponse = new DefaultRpcResponse(rpcRequest.getId(), 400,
+                    "wait RpcResponse Timeout", null, null);
+        }
 
         return rpcResponse;
     }
@@ -102,12 +106,12 @@ public class RpcClientImpl implements RpcClient {
     @Override
     public InvokeFuture sendRequestWithCallback(RpcRequest rpcRequest,
                                                 InvokeCallback callback) throws Exception {
-        return sendRequestWithFuture(rpcRequest, 0, callback);
+        return sendRequestWithFuture(rpcRequest, DEFAULT_TIMEOUT, callback);
     }
 
     @Override
     public InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest) throws Exception {
-        return sendRequestWithFuture(rpcRequest, 0, null);
+        return sendRequestWithFuture(rpcRequest, DEFAULT_TIMEOUT, null);
     }
 
     @Override
@@ -119,23 +123,29 @@ public class RpcClientImpl implements RpcClient {
                                               long timeoutMillis,
                                               InvokeCallback callback) throws Exception {
         DefaultInvokeFuture invokeFuture = new DefaultInvokeFuture(rpcRequest, callback);
-        Map<Integer, InvokeFuture> map = channel.attr(RpcResponseHandler.FUTURE).get();
-        map.put(invokeFuture.invokeId(), invokeFuture);
+        Map<Integer, InvokeFuture> invokeFutureMap = channel.attr(RpcResponseHandler.FUTURE).get();
+        invokeFutureMap.put(invokeFuture.invokeId(), invokeFuture);
 
         int requestId = Integer.parseInt(rpcRequest.getId());
-        if (timeoutMillis > 0) {
-            Timeout timeout = timer.newTimeout(timeout1 -> {
-                InvokeFuture future = map.remove(requestId);
-                if (future != null) {
-                    future.cancelTimeout();
-                }
-            }, timeoutMillis, TimeUnit.MILLISECONDS);
-            invokeFuture.addTimeout(timeout);
+
+        if (timeoutMillis < DEFAULT_TIMEOUT) {
+            timeoutMillis = DEFAULT_TIMEOUT;
         }
+        Timeout timeout = timer.newTimeout(timeout1 -> {
+            InvokeFuture future = invokeFutureMap.remove(requestId);
+            if (future != null) {
+                DefaultRpcResponse response = new DefaultRpcResponse(rpcRequest.getId());
+                response.setCode(400);
+                response.setMessage("wait RpcResponse timeout");
+                future.setResponse(response);
+                future.cancelTimeout();
+            }
+        }, timeoutMillis, TimeUnit.MILLISECONDS);
+        invokeFuture.addTimeout(timeout);
 
         channel.writeAndFlush(rpcRequest).addListener(cf -> {
             if (!cf.isSuccess()) {
-                InvokeFuture future = map.remove(requestId);
+                InvokeFuture future = invokeFutureMap.remove(requestId);
                 if (future != null) {
                     future.cancelTimeout();
                     future.setCause(cf.cause());
