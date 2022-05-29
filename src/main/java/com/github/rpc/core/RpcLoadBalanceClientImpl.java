@@ -1,6 +1,8 @@
 package com.github.rpc.core;
 
 import cn.hutool.core.collection.ConcurrentHashSet;
+import com.github.rpc.InvokeCallback;
+import com.github.rpc.InvokeFuture;
 import com.github.rpc.RpcClient;
 import com.github.rpc.loadbalance.LoadBalance;
 import com.github.rpc.loadbalance.LoadBalanceStrategy;
@@ -56,9 +58,11 @@ public class RpcLoadBalanceClientImpl extends RpcClientImpl {
     }
 
     @Override
-    public Future<RpcResponse> sendNoBlockRequest(RpcRequest rpcRequest) throws Exception {
-        RpcClient rpcClient = this.loadBalance.select(getServiceName(rpcRequest));
-        return rpcClient.sendNoBlockRequest(rpcRequest);
+    public InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest,
+                                              long timeoutMillis,
+                                              InvokeCallback callback) throws Exception {
+        RpcClientImpl rpcClient = (RpcClientImpl)this.loadBalance.select(getServiceName(rpcRequest));
+        return rpcClient.sendRequestWithFuture(rpcRequest, timeoutMillis, callback);
     }
 
     private String getServiceName(RpcRequest rpcRequest) {

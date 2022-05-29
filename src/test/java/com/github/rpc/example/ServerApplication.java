@@ -22,7 +22,7 @@ public class ServerApplication {
                 .bind(port)
                 .registerComponent(PersonServiceImpl.class, OrderServiceImpl.class)
                 .nettyChildOption(ChannelOption.SO_KEEPALIVE, true)
-                .zookeeper(zookeeper)
+//                .zookeeper(zookeeper)
                 .serialize(Serializer.PROTOBUF)
                 .build();
         rpcServer.start();

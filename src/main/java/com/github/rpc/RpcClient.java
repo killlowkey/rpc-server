@@ -16,7 +16,11 @@ public interface RpcClient extends InvokeOperation, SslOperation, HealthCheck {
 
     RpcResponse sendRequest(RpcRequest rpcRequest) throws Exception;
 
-    Future<RpcResponse> sendNoBlockRequest(RpcRequest rpcRequest) throws Exception;
+    InvokeFuture sendRequestWithCallback(RpcRequest rpcRequest, InvokeCallback callback) throws Exception;
+
+    InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest) throws Exception;
+
+    InvokeFuture sendRequestWithFuture(RpcRequest rpcRequest, long timeoutMillis) throws Exception;
 
     void setSerializer(Serializer serializer);
 
