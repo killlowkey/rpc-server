@@ -45,10 +45,11 @@ public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse>
                 invokeFuture.setResponse(response);
                 // 取消超时
                 invokeFuture.cancelTimeout();
-                // 执行回调
-                invokeFuture.executeInvokeCallback();
             } catch (Exception ex) {
                 invokeFuture.setCause(ex);
+            } finally {
+                // 执行回调
+                invokeFuture.executeInvokeCallback();
             }
         }
     }
