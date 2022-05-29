@@ -8,7 +8,6 @@ import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,12 +30,24 @@ public class RpcResponseHandler extends SimpleChannelInboundHandler<RpcResponse>
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+        ctx.channel()
+                .attr(FUTURE)
+                .set(null);
+    }
+
+    @Override
     protected void channelRead0(ChannelHandlerContext ctx, RpcResponse response) throws Exception {
         if (logger.isDebugEnabled()) {
-            logger.debug("offer request#{} response to responseReceivers queue", response.getId());
+            logger.debug("handle id={} RpcResponse", response.getId());
         }
 
         Map<Integer, InvokeFuture> invokeFutureMap = ctx.channel().attr(FUTURE).get();
+        if (invokeFutureMap == null || invokeFutureMap.isEmpty()) {
+            return;
+        }
+
         int invokeId = Integer.parseInt(response.getId());
         InvokeFuture invokeFuture = invokeFutureMap.get(invokeId);
         if (invokeFuture != null) {
