@@ -6,6 +6,7 @@ import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.registry.Registry;
 import com.github.rpc.serializer.Serializer;
 import com.github.rpc.serializer.SerializeProcessor;
+import com.github.rpc.utils.ExecuteServiceHolder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -94,6 +95,9 @@ public class RpcServerImpl implements RpcServer {
         if (this.address == null) {
             throw new IllegalStateException("address cannot be null");
         }
+
+        // 初始化线程池
+        ExecuteServiceHolder.init();
 
         // 序列化
         this.serializer = this.serializer == null ? Serializer.JSON : this.serializer;

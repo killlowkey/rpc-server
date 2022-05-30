@@ -32,7 +32,7 @@ rpc-server 是一个基于 Netty 的 RPC 框架
 
 
 ## 如何使用
-> 以下例子启动之前，需要先把 Zookeeper 启动
+> 以下例子启动之前，需要生成 Protobuf（执行 mvn clean compile），然后把 Zookeeper 启动
 
 1. 定义 PersonService 接口，并使用 @RpcClient 注解标记
 

@@ -5,10 +5,10 @@ import com.github.rpc.core.DefaultRpcResponse;
 import com.github.rpc.core.JsonParamAdapter;
 import com.github.rpc.core.RpcRequest;
 import com.github.rpc.exceptions.MethodNotFoundException;
-import com.github.rpc.exceptions.RpcServerException;
 import com.github.rpc.invoke.MethodInvokeDispatcher;
 import com.github.rpc.registry.Entry;
 import com.github.rpc.registry.Registry;
+import com.github.rpc.utils.ExecuteServiceHolder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.internal.StringUtil;
@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-
 /**
  * @author Ray
  * @date created in 2022/3/5 13:05
@@ -53,11 +52,16 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
             return;
         }
 
+        // 提交任务
+        ExecuteServiceHolder.getInstance().submit(() -> handle(ctx, rpcRequest, method));
+    }
+
+    private void handle(ChannelHandlerContext ctx, RpcRequest rpcRequest, Method method) {
         try {
             // 适配方法参数
             Object[] params = jsonParamAdapter.adapt(method, rpcRequest.getParams());
             // 调用方法：com.github.PersonService#say
-            DefaultRpcResponse response = invoke(rpcRequest.getName(), params, rpcRequest.getId());
+            DefaultRpcResponse response = invoke(rpcRequest.getName(), params);
             // 成功
             response.success();
             ctx.writeAndFlush(response);
@@ -68,8 +72,8 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         }
     }
 
-    private DefaultRpcResponse invoke(String name, Object[] params, String id) throws Throwable {
-        DefaultRpcResponse response = new DefaultRpcResponse(id);
+    private DefaultRpcResponse invoke(String name, Object[] params) throws Throwable {
+        DefaultRpcResponse response = new DefaultRpcResponse(currentRequest.getId());
         // 调用方法并获取结果
         Object result = this.dispatcher.invoke(name, params);
         response.setResult(result);
@@ -85,10 +89,8 @@ public class RpcRequestHandler extends SimpleChannelInboundHandler<RpcRequest> {
         DefaultRpcResponse response = new DefaultRpcResponse(id);
 
         if (cause instanceof MethodNotFoundException) {
+            response.setCode(400);
             response.setError(ErrorEnum.METHOD_NOT_FOUND);
-        } else if (cause instanceof RpcServerException) {
-            response.setCode(500);
-            response.setMessage(cause.getMessage());
         } else {
             response.setCode(500);
             response.setMessage(cause.getMessage());
